@@ -561,9 +561,8 @@ function renderHeader(config) {
   if (headerTop) {
     headerTop.innerHTML = `
       <div class="container" style="justify-content:flex-end;">
-        <a href="cart.html" class="header-top-cart" title="Carrito de compra">
-          <i class="lucide-shopping-cart" style="width:14px;height:14px;"></i>
-          <span>Carrito de compra</span>
+        <a href="cart.html" class="header-top-cart" title="Carrito de compra" aria-label="Carrito de compra">
+          <i class="lucide-shopping-cart" style="width:18px;height:18px;"></i>
           <span class="count-badge cart-count" style="position:static;display:${cartCount > 0 ? 'flex' : 'none'};">${cartCount}</span>
         </a>
       </div>`;
