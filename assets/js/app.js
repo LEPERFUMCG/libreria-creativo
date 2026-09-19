@@ -559,13 +559,8 @@ function renderHeader(config) {
   const headerMain = document.getElementById('header-main');
 
   if (headerTop) {
-    headerTop.innerHTML = `
-      <div class="container" style="justify-content:flex-end;">
-        <a href="cart.html" class="header-top-cart" title="Carrito de compra" aria-label="Carrito de compra">
-          <i class="lucide-shopping-cart" style="width:18px;height:18px;"></i>
-          <span class="count-badge cart-count" style="position:static;display:${cartCount > 0 ? 'flex' : 'none'};">${cartCount}</span>
-        </a>
-      </div>`;
+    headerTop.style.display = 'none';
+    headerTop.innerHTML = '';
   }
 
   if (headerMain) {
@@ -586,6 +581,10 @@ function renderHeader(config) {
           <input type="text" placeholder="Buscar libros, autores..." id="search-input" onkeyup="handleSearch(this.value)" autocomplete="off">
           <div class="search-dropdown" id="search-dropdown"></div>
         </div>
+        <a href="cart.html" class="header-action-btn header-search-cart" title="Carrito" aria-label="Carrito de compra">
+          <i class="lucide-shopping-cart"></i>
+          <span class="count-badge cart-count" style="display:${cartCount > 0 ? 'flex' : 'none'};">${cartCount}</span>
+        </a>
         <nav class="desktop-nav">
           <a href="index.html" class="nav-link ${isCurrentPage('index.html') ? 'active' : ''}">Inicio</a>
           <a href="catalog.html" class="nav-link ${isCurrentPage('catalog.html') ? 'active' : ''}">Catálogo</a>
@@ -593,7 +592,7 @@ function renderHeader(config) {
         </nav>
         <div class="header-actions">
           <a href="favorites.html" class="header-action-btn" title="Favoritos"><i class="lucide-heart"></i></a>
-          <a href="cart.html" class="header-action-btn" title="Carrito">
+          <a href="cart.html" class="header-action-btn header-cart" title="Carrito">
             <i class="lucide-shopping-cart"></i>
             <span class="count-badge cart-count" style="display:${cartCount > 0 ? 'flex' : 'none'};">${cartCount}</span>
           </a>

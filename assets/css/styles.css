@@ -547,39 +547,8 @@ select.form-control {
   box-shadow: var(--shadow);
 }
 .header-top {
-  background: var(--primary);
-  color: var(--white);
-  padding: 6px 0;
-  font-size: 0.75rem;
+  display: none;
 }
-.header-top .container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.header-top a { color: var(--white); }
-.header-top-cart {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.header-top-cart .count-badge {
-  background: var(--white);
-  color: var(--primary);
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.header-top-left { display: flex; gap: 16px; align-items: center; }
-.header-top-right { display: flex; gap: 12px; align-items: center; }
 
 .header-main {
   padding: 12px 0;
@@ -683,6 +652,20 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.header-search-cart {
+  display: none;
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .header-search-cart {
+    display: flex;
+    order: 3;
+  }
+  .header-cart {
+    display: none;
+  }
 }
 
 .mobile-menu-btn {
