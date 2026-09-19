@@ -4,6 +4,6 @@
 // Get them: https://supabase.com -> tu proyecto -> Settings -> API
 // ============================================
 const CLOUD_CONFIG = {
-  url: "",      // ej: "https://abcd1234.supabase.co"
-  anonKey: ""   // ej: "eyJhbGciOiJIUzI1NiIs..." (anon/public key)
+  url: "https://akgdtixolwvdpbnycece.supabase.co",
+  anonKey: "sb_publishable_MhEdzL2VN4yf7mqJcVVRyg_h69VU0GF"
 };
