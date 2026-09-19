@@ -324,17 +324,17 @@ const SEED_DATA = {
   adminUsers: [
     {
       id: "admin1", name: "Administrador General", email: "admin@libreria-creativo.com",
-      role: "superadmin", active: true,
+      role: "superadmin", active: true, password: "pass123",
       permissions: ["all"]
     },
     {
       id: "admin2", name: "María López", email: "maria@libreria-creativo.com",
-      role: "admin", active: true,
+      role: "admin", active: true, password: "pass123",
       permissions: ["books", "orders", "customers", "inventory", "categories", "homepage"]
     },
     {
       id: "admin3", name: "Carlos Rivera", email: "carlos@libreria-creativo.com",
-      role: "inventory", active: true,
+      role: "inventory", active: true, password: "pass123",
       permissions: ["books", "inventory", "categories"]
     }
   ],

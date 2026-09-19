@@ -102,6 +102,11 @@
                             <label class="form-label" for="user-email">Correo Electrónico *</label>
                             <input type="email" class="form-control" id="user-email" placeholder="usuario@libreria-creativo.com" required>
                         </div>
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label class="form-label" for="user-password">Contraseña *</label>
+                            <input type="password" class="form-control" id="user-password" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+                            <div class="form-hint" id="user-password-hint">Mínimo 4 caracteres.</div>
+                        </div>
                         <div class="form-group">
                             <label class="form-label" for="user-role">Rol *</label>
                             <select class="form-control" id="user-role" onchange="applyRoleDefaults(this.value)">
@@ -252,6 +257,8 @@
             setVal('user-role', 'admin');
             renderPermCheckboxes();
             applyRoleDefaults('admin');
+            var pwHintNew = document.getElementById('user-password-hint');
+            if (pwHintNew) pwHintNew.textContent = 'Mínimo 4 caracteres.';
 
             if (id) {
                 var u = DB.getAdminUsers().find(function(x) { return x.id === id; });
@@ -261,6 +268,8 @@
                 setVal('user-name', u.name);
                 setVal('user-email', u.email);
                 setVal('user-role', u.role || 'admin');
+                var pwHintEdit = document.getElementById('user-password-hint');
+                if (pwHintEdit) pwHintEdit.textContent = 'Deja este campo vacío para conservar la contraseña actual.';
                 document.getElementById('user-active').checked = !!u.active;
                 var perms = u.permissions || [];
                 if (perms.indexOf('all') !== -1) perms = ALL_PERM_KEYS.slice();
@@ -301,6 +310,7 @@
             e.preventDefault();
             var name = document.getElementById('user-name').value.trim();
             var email = document.getElementById('user-email').value.trim().toLowerCase();
+            var password = document.getElementById('user-password').value;
             var role = document.getElementById('user-role').value;
             var active = document.getElementById('user-active').checked;
             var perms = Array.prototype.map.call(
@@ -309,6 +319,8 @@
             );
 
             if (!name || !email) { Toast.show('Nombre y correo son obligatorios', 'error'); return; }
+            if (!editingUserId && !password) { Toast.show('La contraseña es obligatoria', 'error'); return; }
+            if (password && password.length < 4) { Toast.show('La contraseña debe tener al menos 4 caracteres', 'error'); return; }
             var users = DB.getAdminUsers();
             var dup = users.find(function(x) { return x.email === email && x.id !== editingUserId; });
             if (dup) { Toast.show('Ya existe un usuario con ese correo', 'error'); return; }
@@ -318,13 +330,16 @@
             if (editingUserId) {
                 var idx = users.findIndex(function(x) { return x.id === editingUserId; });
                 if (idx === -1) return;
-                users[idx] = Object.assign({}, users[idx], { name: name, email: email, role: role, active: active, permissions: perms });
+                var updated = Object.assign({}, users[idx], { name: name, email: email, role: role, active: active, permissions: perms });
+                if (password) updated.password = password;
+                users[idx] = updated;
                 Toast.show('Usuario actualizado', 'success');
             } else {
                 users.push({
                     id: DB.generateId('admin'),
                     name: name,
                     email: email,
+                    password: password,
                     role: role,
                     active: active,
                     permissions: perms

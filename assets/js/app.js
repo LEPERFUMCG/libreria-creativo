@@ -258,12 +258,14 @@ const AdminAuth = {
   login(email, password) {
     const users = DB.getAdminUsers();
     const user = users.find(u => u.email === email);
-    if (user && user.active) {
-      // Simple auth - in real app, use proper password hashing
-      localStorage.setItem('bookstore_currentAdmin', JSON.stringify(user));
-      return { success: true, user };
-    }
-    return { success: false, message: 'Credenciales incorrectas' };
+    if (!user) return { success: false, message: 'Correo o contraseña incorrectos' };
+    if (!user.active) return { success: false, message: 'Tu usuario está desactivado' };
+    const expected = user.password || 'pass123';
+    if (password !== expected) return { success: false, message: 'Correo o contraseña incorrectos' };
+    const safeUser = Object.assign({}, user);
+    delete safeUser.password;
+    localStorage.setItem('bookstore_currentAdmin', JSON.stringify(safeUser));
+    return { success: true, user: safeUser };
   },
   logout() {
     localStorage.removeItem('bookstore_currentAdmin');
