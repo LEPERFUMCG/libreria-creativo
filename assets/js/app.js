@@ -929,11 +929,18 @@ function renderAdminTopbar(title) {
       <h1 class="admin-topbar-title">${title}</h1>
     </div>
     <div class="admin-topbar-right">
-      <div class="relative">
-        <button class="header-action-btn" onclick="toggleAdminNotifications()" title="Notificaciones">
+      <div class="relative notif-wrap">
+        <button class="header-action-btn" onclick="toggleAdminNotifications(event)" title="Notificaciones">
           <i class="lucide-bell"></i>
-          ${notifications.length > 0 ? `<span class="count-badge cart-count" style="display:flex;">${notifications.length}</span>` : ''}
+          <span class="count-badge notif-badge" style="display:${notifications.length > 0 ? 'flex' : 'none'};">${notifications.length}</span>
         </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-dropdown-header">
+            <span>Notificaciones</span>
+            <button type="button" class="notif-mark-all" onclick="markAllNotificationsRead()">Marcar todas como leídas</button>
+          </div>
+          <div class="notif-list" id="notif-list">${renderNotificationsList()}</div>
+        </div>
       </div>
       <div class="admin-user-info" style="display:flex;align-items:center;gap:8px;">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">${(AdminAuth.getUser()?.name || 'A')[0]}</div>
@@ -949,8 +956,69 @@ function toggleAdminSidebar() {
   if (overlay) overlay.classList.toggle('active');
 }
 
-function toggleAdminNotifications() {
-  Toast.show('Panel de notificaciones', 'info');
+function renderNotificationsList() {
+  const items = DB.getNotifications();
+  if (!items || items.length === 0) {
+    return '<div class="notif-empty">No tienes notificaciones.</div>';
+  }
+  const icons = { new_order: 'shopping-cart', low_stock: 'alert-triangle', out_of_stock: 'x-circle', new_customer: 'user-plus', contact: 'mail' };
+  return items.map(n => `
+    <button type="button" class="notif-item ${n.read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
+      <span class="notif-item-icon"><i class="lucide-${icons[n.type] || 'bell'}"></i></span>
+      <span class="notif-item-body">
+        <span class="notif-item-msg">${n.message}</span>
+        <span class="notif-item-date">${n.createdAt ? String(n.createdAt).slice(0, 10) : ''}</span>
+      </span>
+    </button>`).join('');
+}
+
+function toggleAdminNotifications(event) {
+  if (event) event.stopPropagation();
+  const dd = document.getElementById('notif-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('open');
+}
+
+function refreshNotificationsUI() {
+  const unread = DB.getNotifications().filter(n => !n.read).length;
+  const badge = document.querySelector('.notif-badge');
+  if (badge) {
+    badge.textContent = unread;
+    badge.style.display = unread > 0 ? 'flex' : 'none';
+  }
+  const list = document.getElementById('notif-list');
+  if (list) list.innerHTML = renderNotificationsList();
+  const navBadge = document.querySelector('.admin-nav-item .nav-badge');
+  if (navBadge) {
+    if (unread > 0) navBadge.textContent = unread;
+    else navBadge.remove();
+  }
+}
+
+function markNotificationRead(id) {
+  const items = DB.getNotifications();
+  const notification = items.find(n => n.id === id);
+  if (!notification || notification.read) return;
+  notification.read = true;
+  DB.setNotifications(items);
+  refreshNotificationsUI();
+}
+
+function markAllNotificationsRead() {
+  const items = DB.getNotifications();
+  if (!items.some(n => !n.read)) return;
+  items.forEach(n => { n.read = true; });
+  DB.setNotifications(items);
+  refreshNotificationsUI();
+}
+
+if (typeof window !== 'undefined' && !window.__notifOutsideClickBound) {
+  document.addEventListener('click', function(e) {
+    const dd = document.getElementById('notif-dropdown');
+    if (!dd || !dd.classList.contains('open')) return;
+    if (!e.target.closest('.notif-wrap')) dd.classList.remove('open');
+  });
+  window.__notifOutsideClickBound = true;
 }
 
 // ============================================
