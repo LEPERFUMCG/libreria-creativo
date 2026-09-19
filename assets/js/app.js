@@ -560,15 +560,12 @@ function renderHeader(config) {
 
   if (headerTop) {
     headerTop.innerHTML = `
-      <div class="container">
-        <div class="header-top-left">
-          <span><i class="lucide-phone" style="width:12px;height:12px;"></i> ${config.phone}</span>
-          <span class="hide-mobile"><i class="lucide-mail" style="width:12px;height:12px;"></i> ${config.email}</span>
-        </div>
-        <div class="header-top-right">
-          <span class="hide-mobile">${config.schedule}</span>
-          ${config.whatsapp ? `<a href="https://wa.me/${config.whatsapp.replace(/[^0-9]/g, '')}" target="_blank"><i class="lucide-message-circle" style="width:12px;height:12px;"></i> WhatsApp</a>` : ''}
-        </div>
+      <div class="container" style="justify-content:flex-end;">
+        <a href="cart.html" class="header-top-cart" title="Carrito de compra">
+          <i class="lucide-shopping-cart" style="width:14px;height:14px;"></i>
+          <span>Carrito de compra</span>
+          <span class="count-badge cart-count" style="position:static;display:${cartCount > 0 ? 'flex' : 'none'};">${cartCount}</span>
+        </a>
       </div>`;
   }
 
