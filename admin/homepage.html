@@ -189,15 +189,22 @@
     initAdminPage('Página de Inicio');
 
     const config = DB.getConfig();
-    const sectionOrder = config.sectionOrder || ['featured', 'new', 'bestsellers', 'offers', 'categories', 'authors'];
     const sectionLabels = {
       featured: 'Libros Destacados',
-      new: 'Nuevos Lanzamientos',
+      new: 'Nuevos Libros',
       bestsellers: 'Más Vendidos',
-      offers: 'Ofertas',
+      offers: 'Ofertas y Promociones',
       categories: 'Categorías',
-      authors: 'Autores'
+      authors: 'Autores Destacados'
     };
+    const DEFAULT_SECTIONS = ['featured', 'new', 'bestsellers', 'offers', 'categories', 'authors'];
+    const savedSections = (config.homepageSections || []).slice().sort(function (a, b) { return (a.order || 999) - (b.order || 999); });
+    const sectionOrder = savedSections.length ? savedSections.map(function (s) { return s.id; }) : DEFAULT_SECTIONS.slice();
+
+    function sectionVisible(cfg, id) {
+      const found = (cfg.homepageSections || []).find(function (s) { return s.id === id; });
+      return found ? found.visible !== false : true;
+    }
 
     function fillForm(cfg) {
       document.getElementById('hp-banner-title').value = cfg.banner?.title || '';
@@ -209,13 +216,12 @@
       document.getElementById('hp-color-secondary').value = cfg.secondaryColor || '#1a1a2e';
       document.getElementById('hp-color-accent').value = cfg.accentColor || '#f59e0b';
 
-      const vis = cfg.visibleSections || {};
-      document.getElementById('sec-featured').checked = vis.featured !== false;
-      document.getElementById('sec-new').checked = vis.new !== false;
-      document.getElementById('sec-bestsellers').checked = vis.bestsellers !== false;
-      document.getElementById('sec-offers').checked = vis.offers !== false;
-      document.getElementById('sec-categories').checked = vis.categories !== false;
-      document.getElementById('sec-authors').checked = vis.authors === true;
+      document.getElementById('sec-featured').checked = sectionVisible(cfg, 'featured');
+      document.getElementById('sec-new').checked = sectionVisible(cfg, 'new');
+      document.getElementById('sec-bestsellers').checked = sectionVisible(cfg, 'bestsellers');
+      document.getElementById('sec-offers').checked = sectionVisible(cfg, 'offers');
+      document.getElementById('sec-categories').checked = sectionVisible(cfg, 'categories');
+      document.getElementById('sec-authors').checked = sectionVisible(cfg, 'authors');
 
       if (cfg.banner?.image) {
         document.getElementById('banner-img-preview').src = cfg.banner.image;
@@ -324,15 +330,15 @@
           buttonText: document.getElementById('hp-banner-btn-text').value,
           buttonLink: document.getElementById('hp-banner-btn-link').value
         },
-        visibleSections: {
-          featured: document.getElementById('sec-featured').checked,
-          new: document.getElementById('sec-new').checked,
-          bestsellers: document.getElementById('sec-bestsellers').checked,
-          offers: document.getElementById('sec-offers').checked,
-          categories: document.getElementById('sec-categories').checked,
-          authors: document.getElementById('sec-authors').checked
-        },
-        sectionOrder: sectionOrder.slice()
+        homepageSections: sectionOrder.map(function (id, i) {
+          const existing = (config.homepageSections || []).find(function (s) { return s.id === id; }) || {};
+          return {
+            id: id,
+            title: existing.title || sectionLabels[id],
+            visible: document.getElementById('sec-' + id).checked,
+            order: i + 1
+          };
+        })
       };
 
       DB.setConfig(updated);
