@@ -714,7 +714,7 @@ function renderFooter(config) {
             ${config.logo ? `<img src="${config.logo}" alt="" style="height:32px;">` : ''}
             <span class="footer-logo-text">${config.storeName}</span>
           </div>
-          <p class="footer-desc">${config.storeSlogan}. Tu próxima aventura comienza aquí.</p>
+          <p class="footer-desc">${config.storeSlogan || ''}</p>
           <div class="footer-social">
             ${config.facebook ? `<a href="${config.facebook}" target="_blank" aria-label="Facebook"><i class="lucide-facebook"></i></a>` : ''}
             ${config.instagram ? `<a href="${config.instagram}" target="_blank" aria-label="Instagram"><i class="lucide-instagram"></i></a>` : ''}

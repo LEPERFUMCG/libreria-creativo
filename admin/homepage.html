@@ -202,9 +202,9 @@
     function fillForm(cfg) {
       document.getElementById('hp-banner-title').value = cfg.banner?.title || '';
       document.getElementById('hp-banner-subtitle').value = cfg.banner?.subtitle || '';
-      document.getElementById('hp-banner-btn-text').value = cfg.banner?.btnText || '';
-      document.getElementById('hp-banner-btn-link').value = cfg.banner?.btnLink || '#';
-      document.getElementById('hp-store-name').value = cfg.businessName || '';
+      document.getElementById('hp-banner-btn-text').value = cfg.banner?.buttonText || cfg.banner?.btnText || '';
+      document.getElementById('hp-banner-btn-link').value = cfg.banner?.buttonLink || cfg.banner?.btnLink || '#';
+      document.getElementById('hp-store-name').value = cfg.storeName || cfg.businessName || '';
       document.getElementById('hp-color-primary').value = cfg.primaryColor || '#2563eb';
       document.getElementById('hp-color-secondary').value = cfg.secondaryColor || '#1a1a2e';
       document.getElementById('hp-color-accent').value = cfg.accentColor || '#f59e0b';
@@ -311,7 +311,7 @@
 
       const updated = {
         ...config,
-        businessName: document.getElementById('hp-store-name').value,
+        storeName: document.getElementById('hp-store-name').value,
         primaryColor: document.getElementById('hp-color-primary').value,
         secondaryColor: document.getElementById('hp-color-secondary').value,
         accentColor: document.getElementById('hp-color-accent').value,
@@ -321,8 +321,8 @@
           image: (bannerImg && bannerImg.style.display !== 'none') ? bannerImg.src : (config.banner?.image || ''),
           title: document.getElementById('hp-banner-title').value,
           subtitle: document.getElementById('hp-banner-subtitle').value,
-          btnText: document.getElementById('hp-banner-btn-text').value,
-          btnLink: document.getElementById('hp-banner-btn-link').value
+          buttonText: document.getElementById('hp-banner-btn-text').value,
+          buttonLink: document.getElementById('hp-banner-btn-link').value
         },
         visibleSections: {
           featured: document.getElementById('sec-featured').checked,

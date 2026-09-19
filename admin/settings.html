@@ -167,8 +167,8 @@
     const form = document.getElementById('settings-form');
 
     function fillForm(cfg) {
-      document.getElementById('cfg-name').value = cfg.businessName || '';
-      document.getElementById('cfg-slogan').value = cfg.slogan || '';
+      document.getElementById('cfg-name').value = cfg.storeName || cfg.businessName || '';
+      document.getElementById('cfg-slogan').value = cfg.storeSlogan || cfg.slogan || '';
       document.getElementById('cfg-email').value = cfg.email || '';
       document.getElementById('cfg-phone').value = cfg.phone || '';
       document.getElementById('cfg-whatsapp').value = cfg.whatsapp || '';
@@ -224,8 +224,8 @@
 
       const updated = {
         ...config,
-        businessName: document.getElementById('cfg-name').value,
-        slogan: document.getElementById('cfg-slogan').value,
+        storeName: document.getElementById('cfg-name').value,
+        storeSlogan: document.getElementById('cfg-slogan').value,
         email: document.getElementById('cfg-email').value,
         phone: document.getElementById('cfg-phone').value,
         whatsapp: document.getElementById('cfg-whatsapp').value,
