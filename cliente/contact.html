@@ -102,7 +102,14 @@
 
         function renderContactInfo(config) {
             const cards = document.getElementById('contact-info-cards');
-            const contact = config.contact || {};
+            const c = config.contact || {};
+            const contact = {
+                whatsapp: config.whatsapp || c.whatsapp,
+                phone: config.phone || c.phone,
+                email: config.email || c.email,
+                address: config.address || c.address,
+                hours: config.schedule || config.hours || c.hours
+            };
 
             const items = [];
             if (contact.whatsapp) {
@@ -138,7 +145,13 @@
 
         function renderSocialLinks(config) {
             const container = document.getElementById('social-links');
-            const socials = config.social || {};
+            const s = config.social || {};
+            const socials = {
+                facebook: config.facebook || s.facebook,
+                instagram: config.instagram || s.instagram,
+                twitter: config.twitter || s.twitter,
+                tiktok: config.tiktok || s.tiktok
+            };
 
             const links = [];
             if (socials.facebook) links.push({ icon: 'lucide-facebook', url: socials.facebook, label: 'Facebook' });

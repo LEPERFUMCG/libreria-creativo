@@ -174,7 +174,7 @@
       document.getElementById('cfg-whatsapp').value = cfg.whatsapp || '';
       document.getElementById('cfg-city').value = cfg.city || '';
       document.getElementById('cfg-department').value = cfg.department || '';
-      document.getElementById('cfg-hours').value = cfg.hours || '';
+      document.getElementById('cfg-hours').value = cfg.schedule || cfg.hours || '';
       document.getElementById('cfg-address').value = cfg.address || '';
       document.getElementById('cfg-color-primary').value = cfg.primaryColor || '#2563eb';
       document.getElementById('cfg-color-secondary').value = cfg.secondaryColor || '#1a1a2e';
@@ -182,9 +182,9 @@
       document.getElementById('cfg-currency').value = cfg.currency || 'USD';
       document.getElementById('cfg-tax').value = cfg.taxRate ?? 13;
       document.getElementById('cfg-free-shipping').value = cfg.freeShippingMin ?? 50;
-      document.getElementById('cfg-facebook').value = cfg.social?.facebook || '';
-      document.getElementById('cfg-instagram').value = cfg.social?.instagram || '';
-      document.getElementById('cfg-twitter').value = cfg.social?.twitter || '';
+      document.getElementById('cfg-facebook').value = cfg.facebook || cfg.social?.facebook || '';
+      document.getElementById('cfg-instagram').value = cfg.instagram || cfg.social?.instagram || '';
+      document.getElementById('cfg-twitter').value = cfg.twitter || cfg.social?.twitter || '';
 
       if (cfg.logo) {
         document.getElementById('cfg-logo-preview').innerHTML = '<img src="' + cfg.logo + '">';
@@ -231,7 +231,7 @@
         whatsapp: document.getElementById('cfg-whatsapp').value,
         city: document.getElementById('cfg-city').value,
         department: document.getElementById('cfg-department').value,
-        hours: document.getElementById('cfg-hours').value,
+        schedule: document.getElementById('cfg-hours').value,
         address: document.getElementById('cfg-address').value,
         logo: logoImg ? logoImg.src : config.logo,
         favicon: faviconImg ? faviconImg.src : config.favicon,
@@ -241,11 +241,9 @@
         currency: document.getElementById('cfg-currency').value,
         taxRate: parseFloat(document.getElementById('cfg-tax').value) || 0,
         freeShippingMin: parseFloat(document.getElementById('cfg-free-shipping').value) || 0,
-        social: {
-          facebook: document.getElementById('cfg-facebook').value,
-          instagram: document.getElementById('cfg-instagram').value,
-          twitter: document.getElementById('cfg-twitter').value
-        }
+        facebook: document.getElementById('cfg-facebook').value,
+        instagram: document.getElementById('cfg-instagram').value,
+        twitter: document.getElementById('cfg-twitter').value
       };
 
       DB.setConfig(updated);
