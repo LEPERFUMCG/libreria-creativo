@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios del Sistema | Admin</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <style>
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; inset: 0; background: var(--gray-300); border-radius: 22px; transition: .2s; cursor: pointer; }
+        .switch-slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: var(--white); border-radius: 50%; transition: .2s; box-shadow: var(--shadow); }
+        .switch input:checked + .switch-slider { background: var(--success); }
+        .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+        .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+        .perms-grid { display: grid; grid-template-columns: 1fr; gap: 8px 16px; }
+        @media (min-width: 640px) { .perms-grid { grid-template-columns: 1fr 1fr; } }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+        @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-grid .form-group { margin-bottom: 14px; }
+        .perm-chip { display: inline-block; font-size: 0.72rem; background: var(--info-bg); color: var(--info); border-radius: var(--radius-full); padding: 2px 8px; margin: 1px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Usuarios del Sistema</h1>
+                        <p class="text-muted text-sm mb-0">Administra los usuarios administrativos y sus permisos</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openUserModal()">＋ Nuevo Usuario</button>
+                </div>
+
+                <div class="table-wrapper" style="margin-bottom:32px;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Correo</th>
+                                <th>Rol</th>
+                                <th>Permisos</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="admin-page-header" style="margin-bottom:16px;">
+                    <div>
+                        <h2 class="admin-page-title" style="font-size:1.15rem;">Actividad Administrativa</h2>
+                        <p class="text-muted text-sm mb-0">Últimas acciones realizadas en el panel</p>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-tbody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- USER FORM MODAL -->
+    <div class="modal-overlay" id="user-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="user-modal-title">Nuevo Usuario</h3>
+                <button type="button" class="modal-close" onclick="Modal.hide('user-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="user-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="user-name">Nombre *</label>
+                            <input type="text" class="form-control" id="user-name" placeholder="Nombre completo" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="user-email">Correo Electrónico *</label>
+                            <input type="email" class="form-control" id="user-email" placeholder="usuario@libreria-creativo.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="user-role">Rol *</label>
+                            <select class="form-control" id="user-role" onchange="applyRoleDefaults(this.value)">
+                                <option value="superadmin">Superadmin</option>
+                                <option value="admin">Administrador</option>
+                                <option value="inventory">Inventario</option>
+                                <option value="sales">Ventas</option>
+                                <option value="support">Soporte</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Estado</label>
+                            <label class="form-check" style="padding-top:12px;">
+                                <input type="checkbox" id="user-active" checked>
+                                <span>Usuario activo</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Permisos del Usuario</label>
+                        <div class="perms-grid" id="user-perms-grid"></div>
+                        <div class="form-hint">Los permisos se ajustan automáticamente según el rol, pero puedes personalizarlos.</div>
+                    </div>
+                    <div class="modal-footer" style="padding:0;">
+                        <button type="button" class="btn btn-ghost" onclick="Modal.hide('user-modal')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="user-save-btn">Guardar Usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var editingUserId = null;
+
+        var PERMISSIONS = [
+            ['books', 'Libros'],
+            ['inventory', 'Inventario'],
+            ['categories', 'Categorías'],
+            ['orders', 'Pedidos'],
+            ['customers', 'Clientes'],
+            ['promotions', 'Promociones'],
+            ['homepage', 'Página Inicio'],
+            ['settings', 'Configuración'],
+            ['reports', 'Reportes'],
+            ['users', 'Usuarios'],
+            ['seo', 'SEO'],
+            ['authors', 'Autores'],
+            ['publishers', 'Editoriales'],
+            ['pages', 'Páginas'],
+            ['shipping', 'Envíos'],
+            ['payments', 'Pagos']
+        ];
+
+        var ALL_PERM_KEYS = PERMISSIONS.map(function(p) { return p[0]; });
+        var PERM_LABEL = {};
+        PERMISSIONS.forEach(function(p) { PERM_LABEL[p[0]] = p[1]; });
+
+        function roleDefaults(role) {
+            if (role === 'superadmin') return ALL_PERM_KEYS.slice();
+            if (role === 'admin') return ALL_PERM_KEYS.filter(function(k) { return k !== 'users'; });
+            if (role === 'inventory') return ['books', 'inventory', 'categories', 'authors', 'publishers'];
+            if (role === 'sales') return ['orders', 'customers', 'promotions', 'shipping', 'payments'];
+            if (role === 'support') return ['orders', 'customers'];
+            return [];
+        }
+
+        function roleBadge(role) {
+            var map = {
+                superadmin: ['badge-danger', 'Superadmin'],
+                admin: ['badge-primary', 'Administrador'],
+                inventory: ['badge-warning', 'Inventario'],
+                sales: ['badge-success', 'Ventas'],
+                support: ['badge-info', 'Soporte']
+            };
+            var r = map[role] || ['badge-gray', role || '—'];
+            return '<span class="badge ' + r[0] + '">' + r[1] + '</span>';
+        }
+
+        function permsHTML(perms) {
+            if (!perms || perms.length === 0) return '<span class="text-muted">Sin permisos</span>';
+            if (perms.indexOf('all') !== -1) return '<span class="badge badge-danger">Todos</span>';
+            var shown = perms.slice(0, 3).map(function(k) {
+                return '<span class="perm-chip">' + (PERM_LABEL[k] || k) + '</span>';
+            }).join('');
+            var more = perms.length > 3 ? '<span class="perm-chip">+' + (perms.length - 3) + '</span>' : '';
+            return shown + more;
+        }
+
+        function renderPermCheckboxes() {
+            document.getElementById('user-perms-grid').innerHTML = PERMISSIONS.map(function(p) {
+                return '<label class="form-check"><input type="checkbox" value="' + p[0] + '" name="user-perms"> <span>' + p[1] + '</span></label>';
+            }).join('');
+        }
+
+        function applyRoleDefaults(role) {
+            var defaults = roleDefaults(role);
+            document.querySelectorAll('#user-perms-grid input[name="user-perms"]').forEach(function(cb) {
+                cb.checked = defaults.indexOf(cb.value) !== -1;
+            });
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function renderUsers() {
+            var users = DB.getAdminUsers();
+            var tbody = document.getElementById('users-tbody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">' +
+                    '<div class="empty-state-icon">👥</div>' +
+                    '<div class="empty-state-title">Sin usuarios</div>' +
+                    '<div class="empty-state-text">Crea el primer usuario administrativo.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = users.map(function(u) {
+                var initial = (u.name || u.email || 'A').charAt(0).toUpperCase();
+                return '<tr>' +
+                    '<td><div style="display:flex;align-items:center;gap:12px;">' +
+                    '<div class="user-avatar">' + initial + '</div>' +
+                    '<div><div class="font-semibold">' + u.name + '</div>' +
+                    '<div class="text-xs text-muted">' + u.id + '</div></div></div></td>' +
+                    '<td class="text-muted">' + u.email + '</td>' +
+                    '<td>' + roleBadge(u.role) + '</td>' +
+                    '<td>' + permsHTML(u.permissions) + '</td>' +
+                    '<td>' +
+                    '<span class="badge ' + (u.active ? 'badge-success' : 'badge-gray') + '" style="display:inline-block;margin-bottom:6px;">' + (u.active ? 'Activo' : 'Inactivo') + '</span>' +
+                    '<label class="switch" title="Activar / desactivar">' +
+                    '<input type="checkbox" ' + (u.active ? 'checked' : '') + ' onchange="toggleUserActive(\'' + u.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '</td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openUserModal(\'' + u.id + '\')" title="Editar">✎</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteUser(\'' + u.id + '\')" title="Eliminar">🗑</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function openUserModal(id) {
+            editingUserId = id || null;
+            document.getElementById('user-form').reset();
+            document.getElementById('user-active').checked = true;
+            document.getElementById('user-modal-title').textContent = 'Nuevo Usuario';
+            document.getElementById('user-save-btn').textContent = 'Guardar Usuario';
+            setVal('user-role', 'admin');
+            renderPermCheckboxes();
+            applyRoleDefaults('admin');
+
+            if (id) {
+                var u = DB.getAdminUsers().find(function(x) { return x.id === id; });
+                if (!u) return;
+                document.getElementById('user-modal-title').textContent = 'Editar Usuario';
+                document.getElementById('user-save-btn').textContent = 'Actualizar Usuario';
+                setVal('user-name', u.name);
+                setVal('user-email', u.email);
+                setVal('user-role', u.role || 'admin');
+                document.getElementById('user-active').checked = !!u.active;
+                var perms = u.permissions || [];
+                if (perms.indexOf('all') !== -1) perms = ALL_PERM_KEYS.slice();
+                renderPermCheckboxes();
+                document.querySelectorAll('#user-perms-grid input[name="user-perms"]').forEach(function(cb) {
+                    cb.checked = perms.indexOf(cb.value) !== -1;
+                });
+            }
+            Modal.show('user-modal');
+        }
+
+        function toggleUserActive(id, el) {
+            var users = DB.getAdminUsers();
+            var u = users.find(function(x) { return x.id === id; });
+            if (!u) return;
+            u.active = el.checked;
+            DB.setAdminUsers(users);
+            Toast.show(u.active ? 'Usuario activado' : 'Usuario desactivado', u.active ? 'success' : 'warning');
+            renderUsers();
+        }
+
+        function deleteUser(id) {
+            var u = DB.getAdminUsers().find(function(x) { return x.id === id; });
+            if (!u) return;
+            var current = AdminAuth.getUser();
+            if (current && current.id === id) {
+                Toast.show('No puedes eliminar tu propio usuario', 'error');
+                return;
+            }
+            Modal.confirm('¿Eliminar al usuario "' + u.name + '"? Esta acción no se puede deshacer.', function() {
+                DB.setAdminUsers(DB.getAdminUsers().filter(function(x) { return x.id !== id; }));
+                Toast.show('Usuario eliminado', 'success');
+                renderUsers();
+            });
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            var name = document.getElementById('user-name').value.trim();
+            var email = document.getElementById('user-email').value.trim().toLowerCase();
+            var role = document.getElementById('user-role').value;
+            var active = document.getElementById('user-active').checked;
+            var perms = Array.prototype.map.call(
+                document.querySelectorAll('#user-perms-grid input[name="user-perms"]:checked'),
+                function(cb) { return cb.value; }
+            );
+
+            if (!name || !email) { Toast.show('Nombre y correo son obligatorios', 'error'); return; }
+            var users = DB.getAdminUsers();
+            var dup = users.find(function(x) { return x.email === email && x.id !== editingUserId; });
+            if (dup) { Toast.show('Ya existe un usuario con ese correo', 'error'); return; }
+
+            if (role === 'superadmin') perms = ['all'];
+
+            if (editingUserId) {
+                var idx = users.findIndex(function(x) { return x.id === editingUserId; });
+                if (idx === -1) return;
+                users[idx] = Object.assign({}, users[idx], { name: name, email: email, role: role, active: active, permissions: perms });
+                Toast.show('Usuario actualizado', 'success');
+            } else {
+                users.push({
+                    id: DB.generateId('admin'),
+                    name: name,
+                    email: email,
+                    role: role,
+                    active: active,
+                    permissions: perms
+                });
+                Toast.show('Usuario creado correctamente', 'success');
+            }
+            DB.setAdminUsers(users);
+            Modal.hide('user-modal');
+            renderUsers();
+        }
+
+        function renderActivity() {
+            var now = new Date();
+            function ago(days, hours) {
+                var d = new Date(now);
+                d.setDate(d.getDate() - days);
+                if (hours) d.setHours(d.getHours() - hours, d.getMinutes() - 15);
+                return d.toLocaleString('es-HN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            }
+            var samples = [
+                { user: 'Administrador General', action: 'Actualizó los metadatos SEO del sitio web', time: ago(0, 1) },
+                { user: 'María López', action: 'Registró movimiento de inventario: Entrada (+20) · El Principito', time: ago(0, 3) },
+                { user: 'Carlos Rivera', action: 'Ajustó el stock de Matemáticas para Todos (0 unidades)', time: ago(1) },
+                { user: 'Administrador General', action: 'Creó la promoción "Descuento de Temporada" (TEMPORADA15)', time: ago(1, 6) },
+                { user: 'María López', action: 'Actualizó el pedido #ORD-001 a "Entregado"', time: ago(1, 9) },
+                { user: 'Carlos Rivera', action: 'Agregó nuevas existencias de Cien Años de Soledad', time: ago(2) },
+                { user: 'Administrador General', action: 'Creó el usuario administrativo "Carlos Rivera"', time: ago(4) },
+                { user: 'Administrador General', action: 'Configuró la zona de envío "San Pedro Sula"', time: ago(5, 4) },
+                { user: 'María López', action: 'Inició sesión en el panel administrativo', time: ago(5, 8) },
+                { user: 'Administrador General', action: 'Actualizó la página "Preguntas Frecuentes"', time: ago(6) }
+            ];
+            var tbody = document.getElementById('activity-tbody');
+            tbody.innerHTML = samples.map(function(s) {
+                return '<tr>' +
+                    '<td class="text-muted">' + s.time + '</td>' +
+                    '<td class="font-semibold">' + s.user + '</td>' +
+                    '<td class="text-muted">' + s.action + '</td></tr>';
+            }).join('');
+        }
+
+        initAdminPage('Usuarios');
+        if (AdminAuth.isLoggedIn()) {
+            renderUsers();
+            renderActivity();
+            document.getElementById('user-form').addEventListener('submit', saveUser);
+        }
+    </script>
+</body>
+</html>

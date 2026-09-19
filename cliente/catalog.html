@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explora el catálogo completo de LIBRERIA CREATIVO. Filtra por categoría, género, autor, precio y disponibilidad.">
+  <meta name="robots" content="index, follow">
+  <title>Catálogo - LIBRERIA CREATIVO</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .catalog-banner {
+      background: var(--gray-900);
+      padding: 28px 0 24px;
+      margin-bottom: 24px;
+    }
+    .catalog-banner-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .catalog-title { color: var(--white); font-size: 1.5rem; }
+    .catalog-banner .btn-outline {
+      border-color: rgba(255,255,255,0.4);
+      color: var(--white);
+      background: rgba(255,255,255,0.08);
+    }
+    .catalog-banner .btn-outline:hover { background: var(--white); color: var(--gray-900); }
+    .catalog-toolbar { display: flex; flex-direction: column; gap: 12px; }
+    .catalog-search { position: relative; max-width: 480px; width: 100%; }
+    .catalog-search i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      pointer-events: none;
+      width: 16px;
+      height: 16px;
+    }
+    .catalog-search input {
+      width: 100%;
+      padding: 10px 14px 10px 40px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.1);
+      color: var(--white);
+      font-size: 0.9rem;
+    }
+    .catalog-search input::placeholder { color: rgba(255,255,255,0.6); }
+    .catalog-search input:focus { outline: none; border-color: var(--white); background: rgba(255,255,255,0.18); }
+    .catalog-toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .results-count { color: rgba(255,255,255,0.75); font-size: 0.85rem; font-weight: 500; }
+    .sort-select {
+      background-color: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.3);
+      color: var(--white);
+      min-width: 170px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .sort-select option { color: var(--gray-800); background: var(--white); }
+    .catalog-layout { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    .filter-sidebar { display: none; }
+    .filter-card { background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 20px; }
+    .filter-group { margin-bottom: 20px; }
+    .filter-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-700); margin-bottom: 10px; }
+    .price-range { display: flex; align-items: center; gap: 8px; }
+    .price-sep { color: var(--gray-400); }
+    .price-range .form-control { min-width: 0; }
+    .filter-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      flex-shrink: 0;
+    }
+    .filter-panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .filter-panel-footer {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+      flex-shrink: 0;
+    }
+    .panel-footer-btn { flex: 1; }
+    .catalog-results { min-width: 0; }
+    @media (min-width: 640px) {
+      .catalog-toolbar { flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+    @media (min-width: 1024px) {
+      .catalog-layout { grid-template-columns: 260px 1fr; align-items: start; }
+      .filter-sidebar { display: block; position: sticky; top: 96px; }
+      #filter-toggle-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="mobile-nav" class="mobile-nav"></div>
+
+  <header class="site-header">
+    <div id="header-top" class="header-top"></div>
+    <div id="header-main" class="header-main"></div>
+  </header>
+
+  <div class="catalog-banner">
+    <div class="container">
+      <div class="catalog-banner-top">
+        <h1 class="catalog-title" id="catalog-title">Catálogo</h1>
+        <button class="btn btn-outline" id="filter-toggle-btn" onclick="toggleFilterPanel()">
+          <i class="lucide-sliders" style="width:16px;height:16px;"></i> Filtros
+        </button>
+      </div>
+      <div class="catalog-toolbar">
+        <div class="catalog-search">
+          <i class="lucide-search"></i>
+          <input type="search" id="search-page-input" placeholder="Buscar por título, autor o ISBN..." autocomplete="off" onkeyup="setSearch(this.value)">
+        </div>
+        <div class="catalog-toolbar-right">
+          <span class="results-count" id="results-count">0 resultados</span>
+          <select class="form-control sort-select" id="sort-select" onchange="setSort(this.value)" aria-label="Ordenar resultados">
+            <option value="default">Relevancia</option>
+            <option value="newest">Más recientes</option>
+            <option value="bestselling">Más vendidos</option>
+            <option value="price-asc">Precio: menor a mayor</option>
+            <option value="price-desc">Precio: mayor a menor</option>
+            <option value="name">Título A - Z</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="section" style="padding-top: 8px;">
+    <div class="container">
+      <div class="catalog-layout">
+        <aside class="filter-sidebar" id="filter-sidebar" aria-label="Filtros de catálogo"></aside>
+        <div class="catalog-results">
+          <div class="book-grid" id="book-grid"></div>
+          <div class="empty-state hidden" id="catalog-empty">
+            <div class="empty-state-icon">📚</div>
+            <h3 class="empty-state-title">No se encontraron libros</h3>
+            <p class="empty-state-text">Prueba con otros términos o limpia los filtros aplicados.</p>
+            <button class="btn btn-primary" onclick="clearFilters()">Limpiar filtros</button>
+          </div>
+          <nav class="pagination" id="pagination" aria-label="Paginación"></nav>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="filter-overlay" id="filter-overlay" onclick="toggleFilterPanel()"></div>
+  <div class="filter-panel" id="filter-panel" role="dialog" aria-modal="true" aria-label="Panel de filtros">
+    <div class="filter-panel-header">
+      <h3 class="filter-title" style="margin:0;">Filtros</h3>
+      <button class="modal-close" onclick="toggleFilterPanel()">✕</button>
+    </div>
+    <div class="filter-panel-body" id="filter-panel-body"></div>
+    <div class="filter-panel-footer">
+      <button class="btn btn-ghost panel-footer-btn" onclick="toggleFilterPanel()">Cancelar</button>
+      <button class="btn btn-primary panel-footer-btn" onclick="toggleFilterPanel()">Ver resultados</button>
+    </div>
+  </div>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script>
+    initPublicPage();
+
+    const config = DB.getConfig();
+    const books = DB.getBooks().filter(b => b.active);
+    const categories = DB.getCategories().filter(c => c.active);
+    const genres = DB.getGenres().filter(g => g.active);
+    const allAuthors = DB.getAuthors().filter(a => a.active);
+
+    const state = {
+      category: getUrlParam('category') || '',
+      genre: getUrlParam('genre') || '',
+      author: getUrlParam('author') || '',
+      featured: getUrlParam('featured') === '1',
+      bestseller: getUrlParam('bestseller') === '1',
+      offers: getUrlParam('offers') === '1',
+      search: getUrlParam('search') || '',
+      minPrice: '',
+      maxPrice: '',
+      available: false,
+      sort: 'default',
+      page: parseInt(getUrlParam('page'), 10) || 1,
+      perPage: 12
+    };
+
+    const titleEl = document.getElementById('catalog-title');
+    if (state.featured) titleEl.textContent = 'Libros Destacados';
+    else if (state.bestseller) titleEl.textContent = 'Más Vendidos';
+    else if (state.offers) titleEl.textContent = 'Ofertas y Promociones';
+    else if (state.author) { const a = DB.getAuthor(state.author); if (a) titleEl.textContent = a.name; }
+    else if (state.category) { const c = DB.getCategory(state.category); if (c) titleEl.textContent = c.name; }
+    else if (state.genre) { const g = DB.getGenre(state.genre); if (g) titleEl.textContent = g.name; }
+    document.title = `${titleEl.textContent} - ${config.storeName}`;
+
+    const searchInput = document.getElementById('search-page-input');
+    if (searchInput) searchInput.value = state.search;
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) sortSelect.value = state.sort;
+
+    function getFilteredBooks() {
+      let result = [...books];
+      if (state.featured) result = result.filter(b => b.featured);
+      if (state.bestseller) result = result.filter(b => b.bestseller);
+      if (state.offers) result = result.filter(b => b.promoPrice > 0);
+      const filters = {
+        category: state.category,
+        genre: state.genre,
+        author: state.author,
+        minPrice: state.minPrice,
+        maxPrice: state.maxPrice,
+        available: state.available,
+        search: state.search
+      };
+      return filterBooks(result, filters);
+    }
+
+    function renderResults() {
+      const sorted = sortBooks(getFilteredBooks(), state.sort);
+      const total = sorted.length;
+      const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+      if (state.page > totalPages) state.page = totalPages;
+      const startIndex = (state.page - 1) * state.perPage;
+      const pageItems = sorted.slice(startIndex, startIndex + state.perPage);
+
+      document.getElementById('results-count').textContent =
+        total === 1 ? '1 resultado' : total + ' resultados';
+
+      const grid = document.getElementById('book-grid');
+      const empty = document.getElementById('catalog-empty');
+      if (pageItems.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        grid.innerHTML = pageItems.map(b => renderBookCard(b, config)).join('');
+      }
+      renderPagination(totalPages);
+    }
+
+    function pageNumbers(totalPages) {
+      if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+      const set = new Set([1, totalPages, state.page - 1, state.page, state.page + 1]);
+      const nums = Array.from(set).filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+      const out = [];
+      let prev = 0;
+      nums.forEach(p => {
+        if (p - prev > 1) out.push('...');
+        out.push(p);
+        prev = p;
+      });
+      return out;
+    }
+
+    function renderPagination(totalPages) {
+      const el = document.getElementById('pagination');
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      let html = `<button class="page-btn" ${state.page <= 1 ? 'disabled' : ''} onclick="goToPage(${state.page - 1})"><i class="lucide-chevron-left" style="width:16px;height:16px;"></i></button>`;
+      pageNumbers(totalPages).forEach(n => {
+        html += n === '...'
+          ? '<span class="page-btn" style="cursor:default;">…</span>'
+          : `<button class="page-btn ${n === state.page ? 'active' : ''}" onclick="goToPage(${n})">${n}</button>`;
+      });
+      html += `<button class="page-btn" ${state.page >= totalPages ? 'disabled' : ''} onclick="goToPage(${state.page + 1})"><i class="lucide-chevron-right" style="width:16px;height:16px;"></i></button>`;
+      el.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      state.page = page;
+      renderResults();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setSearch(value) {
+      state.search = value;
+      state.page = 1;
+      renderResults();
+    }
+
+    function setSort(value) {
+      state.sort = value;
+      state.page = 1;
+      renderResults();
+    }
+
+    function setFilter(field, value) {
+      state[field] = value;
+      state.page = 1;
+      renderFilters();
+      renderResults();
+    }
+
+    function clearFilters() {
+      state.category = '';
+      state.genre = '';
+      state.author = '';
+      state.minPrice = '';
+      state.maxPrice = '';
+      state.available = false;
+      state.featured = false;
+      state.bestseller = false;
+      state.offers = false;
+      state.search = '';
+      state.sort = 'default';
+      state.page = 1;
+      if (searchInput) searchInput.value = '';
+      if (sortSelect) sortSelect.value = 'default';
+      titleEl.textContent = 'Catálogo';
+      document.title = `Catálogo - ${config.storeName}`;
+      renderFilters();
+      renderResults();
+    }
+
+    function toggleFilterPanel() {
+      const panel = document.getElementById('filter-panel');
+      const overlay = document.getElementById('filter-overlay');
+      panel.classList.toggle('active');
+      overlay.classList.toggle('active');
+      document.body.style.overflow = panel.classList.contains('active') ? 'hidden' : '';
+    }
+
+    function buildFilterMarkup(prefix) {
+      return `
+        <div class="filter-group">
+          <h3 class="filter-title">Autor</h3>
+          <select class="form-control" id="${prefix}-author" onchange="setFilter('author', this.value)">
+            <option value="">Todos los autores</option>
+            ${allAuthors.map(a => `<option value="${a.id}" ${state.author === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <h3 class="filter-title">Categoría</h3>
+          <select class="form-control" id="${prefix}-category" onchange="setFilter('category', this.value)">
+            <option value="">Todas las categorías</option>
+            ${categories.map(c => `<option value="${c.id}" ${state.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <h3 class="filter-title">Género</h3>
+          <select class="form-control" id="${prefix}-genre" onchange="setFilter('genre', this.value)">
+            <option value="">Todos los géneros</option>
+            ${genres.map(g => `<option value="${g.id}" ${state.genre === g.id ? 'selected' : ''}>${g.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <h3 class="filter-title">Precio</h3>
+          <div class="price-range">
+            <input type="number" class="form-control" id="${prefix}-minPrice" min="0" placeholder="Mínimo" value="${state.minPrice}" onchange="setFilter('minPrice', this.value)">
+            <span class="price-sep">—</span>
+            <input type="number" class="form-control" id="${prefix}-maxPrice" min="0" placeholder="Máximo" value="${state.maxPrice}" onchange="setFilter('maxPrice', this.value)">
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="form-check">
+            <input type="checkbox" id="${prefix}-available" ${state.available ? 'checked' : ''} onchange="setFilter('available', this.checked)">
+            <span>Solo libros disponibles</span>
+          </label>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm w-full" onclick="clearFilters()">
+          <i class="lucide-rotate-ccw" style="width:14px;height:14px;"></i> Limpiar filtros
+        </button>`;
+    }
+
+    function renderFilters() {
+      const sidebar = document.getElementById('filter-sidebar');
+      if (sidebar) sidebar.innerHTML = `<div class="filter-card">${buildFilterMarkup('f')}</div>`;
+      const body = document.getElementById('filter-panel-body');
+      if (body) body.innerHTML = buildFilterMarkup('m');
+    }
+
+    renderFilters();
+    renderResults();
+  </script>
+</body>
+</html>

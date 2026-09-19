@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Libros</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .admin-toolbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        margin-bottom: 16px;
+                    }
+                    .admin-tools {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        flex: 1;
+                    }
+                    .tool-input { min-width: 220px; flex: 1; }
+                    .view-toggle {
+                        display: inline-flex;
+                        background: var(--gray-100);
+                        border-radius: var(--radius);
+                        padding: 3px;
+                        gap: 2px;
+                    }
+                    .view-toggle button {
+                        width: 38px;
+                        height: 32px;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: var(--gray-500);
+                        font-size: 1rem;
+                        transition: var(--transition);
+                    }
+                    .view-toggle button.active {
+                        background: var(--white);
+                        color: var(--primary);
+                        box-shadow: var(--shadow);
+                    }
+                    .cover-thumb {
+                        width: 44px;
+                        height: 60px;
+                        border-radius: 6px;
+                        object-fit: cover;
+                        background: var(--gray-100);
+                        flex-shrink: 0;
+                        display: block;
+                    }
+                    .cover-ph {
+                        width: 44px;
+                        height: 60px;
+                        border-radius: 6px;
+                        background: var(--primary-bg);
+                        color: var(--primary);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.1rem;
+                        flex-shrink: 0;
+                    }
+                    .books-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+                        gap: 16px;
+                    }
+                    .book-card-admin {
+                        background: var(--white);
+                        border-radius: var(--radius-md);
+                        box-shadow: var(--shadow);
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        transition: var(--transition);
+                    }
+                    .book-card-admin:hover { box-shadow: var(--shadow-md); }
+                    .book-card-admin-cover {
+                        aspect-ratio: 3/4;
+                        background: var(--gray-100);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 2.2rem;
+                        color: var(--primary);
+                        overflow: hidden;
+                    }
+                    .book-card-admin-cover img { width: 100%; height: 100%; object-fit: cover; }
+                    .book-card-admin-body { padding: 12px; flex: 1; }
+                    .book-card-admin-title {
+                        font-weight: 600;
+                        font-size: 0.9rem;
+                        color: var(--gray-900);
+                        line-height: 1.3;
+                    }
+                    .book-card-admin-footer {
+                        display: flex;
+                        gap: 6px;
+                        padding: 10px 12px;
+                        border-top: 1px solid var(--gray-100);
+                    }
+                    .book-price { font-weight: 700; color: var(--gray-900); }
+                    .book-price-old {
+                        font-size: 0.75rem;
+                        color: var(--gray-400);
+                        text-decoration: line-through;
+                        font-weight: 500;
+                    }
+                    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+                    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+                    .form-grid .form-group { margin-bottom: 14px; }
+                    .cover-upload { display: flex; align-items: center; gap: 12px; }
+                    .cover-preview {
+                        width: 56px;
+                        height: 80px;
+                        border-radius: 6px;
+                        background: var(--gray-100);
+                        border: 1px dashed var(--gray-300);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.4rem;
+                        overflow: hidden;
+                        flex-shrink: 0;
+                    }
+                    .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+                    .switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 40px;
+                        height: 22px;
+                        vertical-align: middle;
+                    }
+                    .switch input { opacity: 0; width: 0; height: 0; }
+                    .switch-slider {
+                        position: absolute;
+                        inset: 0;
+                        background: var(--gray-300);
+                        border-radius: 22px;
+                        transition: .2s;
+                        cursor: pointer;
+                    }
+                    .switch-slider:before {
+                        content: '';
+                        position: absolute;
+                        width: 16px;
+                        height: 16px;
+                        left: 3px;
+                        top: 3px;
+                        background: var(--white);
+                        border-radius: 50%;
+                        transition: .2s;
+                        box-shadow: var(--shadow);
+                    }
+                    .switch input:checked + .switch-slider { background: var(--success); }
+                    .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+                    .modal-lg { max-width: 960px; }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Gestión de Libros</h1>
+                        <p class="text-muted text-sm mb-0" id="books-count">Cargando...</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openBookModal()">＋ Nuevo Libro</button>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-tools">
+                        <input type="text" class="form-control tool-input" id="book-search" placeholder="Buscar por título, autor, ISBN o SKU...">
+                        <select class="form-control" id="book-status-filter" style="min-width:170px;width:auto;">
+                            <option value="all">Todos los estados</option>
+                            <option value="active">Solo activos</option>
+                            <option value="inactive">Solo inactivos</option>
+                        </select>
+                    </div>
+                    <div class="view-toggle" id="view-toggle">
+                        <button type="button" class="active" data-view="table" onclick="setBooksView('table')" title="Vista tabla">☰</button>
+                        <button type="button" data-view="grid" onclick="setBooksView('grid')" title="Vista cuadrícula">▦</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper" id="books-table-view">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Portada</th>
+                                <th>Título</th>
+                                <th>Autor</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Estado</th>
+                                <th>Destacado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="books-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="books-grid" id="books-grid-view" style="display:none;"></div>
+
+                <!-- BOOK FORM MODAL -->
+                <div class="modal-overlay" id="book-modal" role="dialog" aria-modal="true" aria-labelledby="book-modal-title">
+                    <div class="modal modal-lg">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="book-modal-title">Nuevo Libro</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('book-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="book-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="book-cover-file">Portada del libro</label>
+                                    <div class="cover-upload">
+                                        <div class="cover-preview" id="book-cover-preview"><span>📖</span></div>
+                                        <div style="flex:1;">
+                                            <input type="file" class="form-control" id="book-cover-file" accept="image/*">
+                                            <div class="form-hint">Selecciona una imagen desde tu dispositivo (JPG o PNG).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="book-title">Título *</label>
+                                    <input type="text" class="form-control" id="book-title" placeholder="Título del libro" required>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-author">Autor *</label>
+                                        <select class="form-control" id="book-author" required></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-publisher">Editorial</label>
+                                        <select class="form-control" id="book-publisher"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-isbn">ISBN</label>
+                                        <input type="text" class="form-control" id="book-isbn" placeholder="978-0000000000">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-sku">SKU</label>
+                                        <input type="text" class="form-control" id="book-sku" placeholder="BK-000">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-category">Categoría</label>
+                                        <select class="form-control" id="book-category"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-genre">Género</label>
+                                        <select class="form-control" id="book-genre"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-price">Precio (L.) *</label>
+                                        <input type="number" class="form-control" id="book-price" placeholder="0.00" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-promo">Precio Promocional (L.)</label>
+                                        <input type="number" class="form-control" id="book-promo" placeholder="0.00" min="0" step="0.01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-stock">Stock *</label>
+                                        <input type="number" class="form-control" id="book-stock" placeholder="0" min="0" step="1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-pages">Páginas</label>
+                                        <input type="number" class="form-control" id="book-pages" placeholder="0" min="0" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-publication">Fecha de Publicación</label>
+                                        <input type="date" class="form-control" id="book-publication">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="book-language">Idioma</label>
+                                        <input type="text" class="form-control" id="book-language" placeholder="Español">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="book-description">Descripción</label>
+                                    <textarea class="form-control" id="book-description" rows="4" placeholder="Sinopsis o descripción del libro"></textarea>
+                                </div>
+                                <div class="flex gap-4 flex-wrap" style="margin-bottom:16px;">
+                                    <label class="form-check">
+                                        <input type="checkbox" id="book-active" checked>
+                                        <span>Activo</span>
+                                    </label>
+                                    <label class="form-check">
+                                        <input type="checkbox" id="book-featured">
+                                        <span>Destacado</span>
+                                    </label>
+                                    <label class="form-check">
+                                        <input type="checkbox" id="book-bestseller">
+                                        <span>Más vendido</span>
+                                    </label>
+                                </div>
+                                <div class="modal-footer" style="padding:0;">
+                                    <button type="button" class="btn btn-ghost" onclick="Modal.hide('book-modal')">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary" id="book-save-btn">Guardar Libro</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var editingBookId = null;
+        var currentView = 'table';
+        var pendingCover = '';
+
+        function coverHTML(b) {
+            return b.cover
+                ? '<img class="cover-thumb" src="' + b.cover + '" alt="">'
+                : '<div class="cover-ph">📖</div>';
+        }
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function renderBooks() {
+            var q = getVal('book-search').toLowerCase();
+            var f = document.getElementById('book-status-filter').value;
+            var list = DB.getBooks();
+            if (f === 'active') list = list.filter(function(b) { return b.active; });
+            else if (f === 'inactive') list = list.filter(function(b) { return !b.active; });
+            if (q) {
+                list = list.filter(function(b) {
+                    var au = DB.getAuthor(b.authorId);
+                    return b.title.toLowerCase().indexOf(q) !== -1 ||
+                        b.isbn.toLowerCase().indexOf(q) !== -1 ||
+                        b.sku.toLowerCase().indexOf(q) !== -1 ||
+                        (au && au.name.toLowerCase().indexOf(q) !== -1);
+                });
+            }
+            list = list.slice().sort(function(a, b) {
+                return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+            });
+            setText('books-count', list.length + ' libro' + (list.length === 1 ? '' : 's') + ' encontrados');
+            renderBooksTable(list);
+            renderBooksGrid(list);
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function renderBooksTable(list) {
+            var tbody = document.getElementById('books-tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8">' +
+                    '<div class="empty-state"><div class="empty-state-icon">📚</div>' +
+                    '<div class="empty-state-title">Sin resultados</div>' +
+                    '<div class="empty-state-text">No se encontraron libros con los filtros actuales.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(function(b) {
+                var au = DB.getAuthor(b.authorId);
+                var hasPromo = b.promoPrice > 0 && b.promoPrice < b.price;
+                var stockBadge = b.stock <= 0 ? 'badge-gray' : (b.stock < 15 ? 'badge-warning' : 'badge-success');
+                return '<tr>' +
+                    '<td>' + coverHTML(b) + '</td>' +
+                    '<td><div class="font-semibold">' + b.title + '</div>' +
+                    '<div class="text-xs text-muted">' + (b.sku || '') + '</div></td>' +
+                    '<td>' + (au ? au.name : '—') + '</td>' +
+                    '<td><div class="book-price">' + formatPrice(b.promoPrice > 0 ? b.promoPrice : b.price) + '</div>' +
+                    (hasPromo ? '<div class="book-price-old">' + formatPrice(b.price) + '</div>' : '') + '</td>' +
+                    '<td><span class="badge ' + stockBadge + '">' + b.stock + '</span></td>' +
+                    '<td>' +
+                    '<span class="badge ' + (b.active ? 'badge-success' : 'badge-gray') + '" style="display:inline-block;margin-bottom:6px;">' + (b.active ? 'Activo' : 'Inactivo') + '</span>' +
+                    '<label class="switch" title="Cambiar estado">' +
+                    '<input type="checkbox" ' + (b.active ? 'checked' : '') + ' onchange="toggleBookActive(\'' + b.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '</td>' +
+                    '<td><button type="button" class="btn btn-sm" style="padding:4px 10px;" onclick="toggleBookFeatured(\'' + b.id + '\')" title="' + (b.featured ? 'Quitar destacado' : 'Marcar destacado') + '">' +
+                    '<span style="font-size:1.05rem;' + (b.featured ? '' : 'filter:grayscale(1);opacity:0.5;') + '">⭐</span></button></td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openBookModal(\'' + b.id + '\')" title="Editar">✎</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteBook(\'' + b.id + '\')" title="Eliminar">🗑</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function renderBooksGrid(list) {
+            var grid = document.getElementById('books-grid-view');
+            if (list.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;border:1px dashed var(--gray-200);border-radius:var(--radius-md);">' +
+                    '<div class="empty-state-icon">📚</div>' +
+                    '<div class="empty-state-title">Sin resultados</div>' +
+                    '<div class="empty-state-text">No se encontraron libros con los filtros actuales.</div></div>';
+                return;
+            }
+            grid.innerHTML = list.map(function(b) {
+                var au = DB.getAuthor(b.authorId);
+                var hasPromo = b.promoPrice > 0 && b.promoPrice < b.price;
+                var statusBadge = b.stock <= 0
+                    ? '<span class="badge badge-gray">Agotado</span>'
+                    : (b.stock < 15 ? '<span class="badge badge-warning">Stock bajo</span>' : '<span class="badge badge-success">Disponible</span>');
+                return '<div class="book-card-admin fade-in">' +
+                    '<div class="book-card-admin-cover">' +
+                    (b.cover ? '<img src="' + b.cover + '" alt="' + b.title + '">' : '<span>📖</span>') + '</div>' +
+                    '<div class="book-card-admin-body">' +
+                    '<div class="book-card-admin-title">' + b.title + '</div>' +
+                    '<div class="text-xs text-muted mt-1">' + (au ? au.name : '') + '</div>' +
+                    '<div class="mt-2"><span class="book-price">' + formatPrice(b.promoPrice > 0 ? b.promoPrice : b.price) + '</span>' +
+                    (hasPromo ? ' <span class="book-price-old">' + formatPrice(b.price) + '</span>' : '') + '</div>' +
+                    '<div class="mt-2">' + statusBadge +
+                    (b.active ? '' : ' <span class="badge badge-gray">Inactivo</span>') +
+                    (b.featured ? ' <span class="badge badge-primary">Destacado</span>' : '') + '</div>' +
+                    '</div>' +
+                    '<div class="book-card-admin-footer">' +
+                    '<button type="button" class="btn btn-sm btn-outline" style="flex:1;" onclick="openBookModal(\'' + b.id + '\')">✎ Editar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger" style="flex:1;" onclick="deleteBook(\'' + b.id + '\')">🗑 Eliminar</button>' +
+                    '</div></div>';
+            }).join('');
+        }
+
+        function setBooksView(v) {
+            currentView = v;
+            document.getElementById('books-table-view').style.display = v === 'table' ? '' : 'none';
+            document.getElementById('books-grid-view').style.display = v === 'grid' ? '' : 'none';
+            document.querySelectorAll('#view-toggle button').forEach(function(btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-view') === v);
+            });
+        }
+
+        function populateSelects() {
+            var authors = DB.getAuthors().filter(function(a) { return a.active; });
+            document.getElementById('book-author').innerHTML =
+                '<option value="">Selecciona un autor</option>' +
+                authors.map(function(a) { return '<option value="' + a.id + '">' + a.name + '</option>'; }).join('');
+
+            var publishers = DB.getPublishers().filter(function(p) { return p.active; });
+            document.getElementById('book-publisher').innerHTML =
+                '<option value="">Selecciona una editorial</option>' +
+                publishers.map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+
+            var cats = DB.getCategories().filter(function(c) { return c.active; });
+            document.getElementById('book-category').innerHTML =
+                '<option value="">Selecciona una categoría</option>' +
+                cats.map(function(c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('');
+
+            var genres = DB.getGenres().filter(function(g) { return g.active; });
+            document.getElementById('book-genre').innerHTML =
+                '<option value="">Selecciona un género</option>' +
+                genres.map(function(g) { return '<option value="' + g.id + '">' + g.name + '</option>'; }).join('');
+        }
+
+        function openBookModal(id) {
+            editingBookId = id || null;
+            pendingCover = '';
+            document.getElementById('book-form').reset();
+            document.getElementById('book-cover-preview').innerHTML = '<span>📖</span>';
+            document.getElementById('book-modal-title').textContent = 'Nuevo Libro';
+            document.getElementById('book-save-btn').textContent = 'Guardar Libro';
+            if (id) {
+                var b = DB.getBook(id);
+                if (!b) return;
+                document.getElementById('book-modal-title').textContent = 'Editar Libro';
+                document.getElementById('book-save-btn').textContent = 'Actualizar Libro';
+                setVal('book-title', b.title);
+                setVal('book-author', b.authorId);
+                setVal('book-publisher', b.publisherId);
+                setVal('book-isbn', b.isbn);
+                setVal('book-sku', b.sku);
+                setVal('book-category', b.categoryId);
+                setVal('book-genre', b.genreId);
+                setVal('book-description', b.description);
+                setVal('book-price', b.price);
+                setVal('book-promo', b.promoPrice);
+                setVal('book-stock', b.stock);
+                setVal('book-publication', b.publicationDate);
+                setVal('book-pages', b.pages);
+                setVal('book-language', b.language);
+                document.getElementById('book-active').checked = !!b.active;
+                document.getElementById('book-featured').checked = !!b.featured;
+                document.getElementById('book-bestseller').checked = !!b.bestseller;
+                if (b.cover) {
+                    document.getElementById('book-cover-preview').innerHTML = '<img src="' + b.cover + '" alt="Portada">';
+                }
+            } else {
+                document.getElementById('book-active').checked = true;
+                setVal('book-language', 'Español');
+                setVal('book-price', '');
+                setVal('book-promo', '');
+                setVal('book-stock', '');
+                setVal('book-pages', '');
+            }
+            Modal.show('book-modal');
+        }
+
+        function handleCoverUpload(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Toast.show('Selecciona una imagen válida', 'error');
+                e.target.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                pendingCover = ev.target.result;
+                document.getElementById('book-cover-preview').innerHTML = '<img src="' + pendingCover + '" alt="Portada">';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveBook(e) {
+            e.preventDefault();
+            var data = {
+                title: getVal('book-title'),
+                authorId: getVal('book-author'),
+                publisherId: getVal('book-publisher'),
+                isbn: getVal('book-isbn'),
+                sku: getVal('book-sku'),
+                categoryId: getVal('book-category'),
+                genreId: getVal('book-genre'),
+                description: getVal('book-description'),
+                price: parseFloat(getVal('book-price')) || 0,
+                promoPrice: parseFloat(getVal('book-promo')) || 0,
+                stock: parseInt(getVal('book-stock'), 10) || 0,
+                publicationDate: getVal('book-publication'),
+                pages: parseInt(getVal('book-pages'), 10) || 0,
+                language: getVal('book-language') || 'Español',
+                active: document.getElementById('book-active').checked,
+                featured: document.getElementById('book-featured').checked,
+                bestseller: document.getElementById('book-bestseller').checked
+            };
+            if (!data.title || !data.authorId || data.price <= 0) {
+                Toast.show('El título, autor y precio son obligatorios', 'error');
+                return;
+            }
+            if (data.promoPrice > 0 && data.promoPrice < data.price) {
+                data.discount = Math.round((1 - data.promoPrice / data.price) * 100);
+            } else {
+                data.discount = 0;
+                if (data.promoPrice >= data.price) data.promoPrice = 0;
+            }
+
+            var books = DB.getBooks();
+            if (editingBookId) {
+                var idx = books.findIndex(function(x) { return x.id === editingBookId; });
+                if (idx === -1) return;
+                var prev = books[idx];
+                data.cover = pendingCover || prev.cover || '';
+                data.createdAt = prev.createdAt;
+                books[idx] = Object.assign({}, prev, data);
+                Toast.show('Libro actualizado', 'success');
+            } else {
+                data.id = DB.generateId('bk');
+                data.cover = pendingCover || '';
+                data.createdAt = new Date().toISOString().split('T')[0];
+                books.push(data);
+                Toast.show('Libro creado correctamente', 'success');
+            }
+            DB.setBooks(books);
+            pendingCover = '';
+            Modal.hide('book-modal');
+            renderBooks();
+        }
+
+        function toggleBookActive(id, el) {
+            var books = DB.getBooks();
+            var b = books.find(function(x) { return x.id === id; });
+            if (!b) return;
+            b.active = el.checked;
+            DB.setBooks(books);
+            Toast.show(b.active ? 'Libro activado' : 'Libro desactivado', b.active ? 'success' : 'warning');
+            renderBooks();
+        }
+
+        function toggleBookFeatured(id) {
+            var books = DB.getBooks();
+            var b = books.find(function(x) { return x.id === id; });
+            if (!b) return;
+            b.featured = !b.featured;
+            DB.setBooks(books);
+            Toast.show(b.featured ? 'Marcado como destacado' : 'Destacado eliminado', b.featured ? 'success' : 'info');
+            renderBooks();
+        }
+
+        function deleteBook(id) {
+            var b = DB.getBook(id);
+            if (!b) return;
+            Modal.confirm('¿Eliminar el libro "' + b.title + '" del catálogo? Esta acción no se puede deshacer.', function() {
+                DB.setBooks(DB.getBooks().filter(function(x) { return x.id !== id; }));
+                Toast.show('Libro eliminado', 'success');
+                if (editingBookId === id) Modal.hide('book-modal');
+                renderBooks();
+            });
+        }
+
+        initAdminPage('Libros');
+        if (AdminAuth.isLoggedIn()) {
+            populateSelects();
+            renderBooks();
+            setBooksView('table');
+            document.getElementById('book-search').addEventListener('input', renderBooks);
+            document.getElementById('book-status-filter').addEventListener('change', renderBooks);
+            document.getElementById('book-form').addEventListener('submit', saveBook);
+            document.getElementById('book-cover-file').addEventListener('change', handleCoverUpload);
+        }
+    </script>
+</body>
+</html>

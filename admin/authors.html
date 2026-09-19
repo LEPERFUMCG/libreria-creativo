@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autores</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .admin-toolbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        margin-bottom: 16px;
+                    }
+                    .admin-tools {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        flex: 1;
+                    }
+                    .tool-input { min-width: 220px; flex: 1; }
+                    .view-toggle {
+                        display: inline-flex;
+                        background: var(--gray-100);
+                        border-radius: var(--radius);
+                        padding: 3px;
+                        gap: 2px;
+                    }
+                    .view-toggle button {
+                        width: 38px;
+                        height: 32px;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: var(--gray-500);
+                        font-size: 1rem;
+                        transition: var(--transition);
+                    }
+                    .view-toggle button.active {
+                        background: var(--white);
+                        color: var(--primary);
+                        box-shadow: var(--shadow);
+                    }
+                    .author-avatar {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                        color: var(--white);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 800;
+                        font-size: 1rem;
+                        flex-shrink: 0;
+                        overflow: hidden;
+                    }
+                    .author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                    .author-avatar-lg {
+                        width: 72px;
+                        height: 72px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                        color: var(--white);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 800;
+                        font-size: 1.8rem;
+                        flex-shrink: 0;
+                        overflow: hidden;
+                    }
+                    .author-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+                    .authors-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+                        gap: 16px;
+                    }
+                    .author-card {
+                        background: var(--white);
+                        border-radius: var(--radius-md);
+                        box-shadow: var(--shadow);
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        transition: var(--transition);
+                    }
+                    .author-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+                    .author-card-top {
+                        padding: 20px 20px 8px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        gap: 10px;
+                    }
+                    .author-card-name { font-weight: 700; color: var(--gray-900); font-size: 0.95rem; line-height: 1.3; }
+                    .author-card-meta { font-size: 0.75rem; color: var(--gray-500); }
+                    .author-card-footer {
+                        display: flex;
+                        gap: 6px;
+                        padding: 10px 12px;
+                        border-top: 1px solid var(--gray-100);
+                        margin-top: auto;
+                    }
+                    .author-ph {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: var(--gray-100);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                    }
+                    .drop-zone {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    .drop-preview {
+                        width: 64px;
+                        height: 64px;
+                        border-radius: 50%;
+                        background: var(--gray-100);
+                        border: 1px dashed var(--gray-300);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5rem;
+                        color: var(--gray-400);
+                        overflow: hidden;
+                        flex-shrink: 0;
+                    }
+                    .drop-preview img { width: 100%; height: 100%; object-fit: cover; }
+                    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+                    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+                    .form-grid .form-group { margin-bottom: 14px; }
+                    .switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 40px;
+                        height: 22px;
+                        vertical-align: middle;
+                    }
+                    .switch input { opacity: 0; width: 0; height: 0; }
+                    .switch-slider {
+                        position: absolute;
+                        inset: 0;
+                        background: var(--gray-300);
+                        border-radius: 22px;
+                        transition: .2s;
+                        cursor: pointer;
+                    }
+                    .switch-slider:before {
+                        content: '';
+                        position: absolute;
+                        width: 16px;
+                        height: 16px;
+                        left: 3px;
+                        top: 3px;
+                        background: var(--white);
+                        border-radius: 50%;
+                        transition: .2s;
+                        box-shadow: var(--shadow);
+                    }
+                    .switch input:checked + .switch-slider { background: var(--success); }
+                    .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+                    .cover-thumb {
+                        width: 36px;
+                        height: 50px;
+                        border-radius: 5px;
+                        object-fit: cover;
+                        background: var(--gray-100);
+                        flex-shrink: 0;
+                        display: block;
+                    }
+                    .cover-ph {
+                        width: 36px;
+                        height: 50px;
+                        border-radius: 5px;
+                        background: var(--primary-bg);
+                        color: var(--primary);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.9rem;
+                        flex-shrink: 0;
+                    }
+                    .detail-section {
+                        background: var(--gray-50);
+                        border: 1px solid var(--gray-200);
+                        border-radius: var(--radius-md);
+                        padding: 14px 16px;
+                        margin-bottom: 16px;
+                    }
+                    .detail-section-title {
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: var(--gray-500);
+                        margin-bottom: 10px;
+                    }
+                    .profile-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                        padding-bottom: 16px;
+                        border-bottom: 1px solid var(--gray-200);
+                        margin-bottom: 16px;
+                        flex-wrap: wrap;
+                    }
+                    .table-shrink { box-shadow: none; border-radius: 6px; }
+                    .book-count-badge { margin-left: 6px; }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Autores</h1>
+                        <p class="text-muted text-sm mb-0" id="authors-count">Cargando...</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openAuthorModal()">＋ Nuevo Autor</button>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-tools">
+                        <input type="text" class="form-control tool-input" id="author-search" placeholder="Buscar por nombre o nacionalidad...">
+                        <select class="form-control" id="author-status-filter" style="min-width:170px;width:auto;">
+                            <option value="all">Todos los estados</option>
+                            <option value="active">Solo activos</option>
+                            <option value="inactive">Solo inactivos</option>
+                        </select>
+                    </div>
+                    <div class="view-toggle" id="view-toggle">
+                        <button type="button" class="active" data-view="grid" onclick="setAuthorsView('grid')" title="Vista cuadrícula">▦</button>
+                        <button type="button" data-view="table" onclick="setAuthorsView('table')" title="Vista tabla">☰</button>
+                    </div>
+                </div>
+
+                <div class="authors-grid" id="authors-grid-view"></div>
+
+                <div class="table-wrapper" id="authors-table-view" style="display:none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Nombre</th>
+                                <th>Nacionalidad</th>
+                                <th>Libros</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="authors-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- AUTHOR FORM MODAL -->
+                <div class="modal-overlay" id="author-modal" role="dialog" aria-modal="true" aria-labelledby="author-modal-title">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="author-modal-title">Nuevo Autor</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('author-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="author-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="author-photo-file">Foto del autor</label>
+                                    <div class="drop-zone">
+                                        <div class="drop-preview" id="author-photo-preview"><span>👤</span></div>
+                                        <div style="flex:1;">
+                                            <input type="file" class="form-control" id="author-photo-file" accept="image/*">
+                                            <div class="form-hint">Selecciona una imagen desde tu dispositivo (JPG o PNG).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="author-name">Nombre *</label>
+                                        <input type="text" class="form-control" id="author-name" placeholder="Nombre completo del autor" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="author-nationality">Nacionalidad</label>
+                                        <input type="text" class="form-control" id="author-nationality" placeholder="Ej: Colombiana">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="author-bio">Biografía</label>
+                                    <textarea class="form-control" id="author-bio" rows="5" placeholder="Trayectoria y datos relevantes del autor"></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom:16px;">
+                                    <label class="form-check" style="justify-content:flex-start;">
+                                        <input type="checkbox" id="author-active" checked>
+                                        <span>Activo</span>
+                                    </label>
+                                </div>
+                                <div class="modal-footer" style="padding:0;">
+                                    <button type="button" class="btn btn-ghost" onclick="Modal.hide('author-modal')">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary" id="author-save-btn">Guardar Autor</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AUTHOR VIEW MODAL -->
+                <div class="modal-overlay" id="author-view-modal" role="dialog" aria-modal="true" aria-labelledby="author-view-title">
+                    <div class="modal modal-lg" style="max-width:720px;">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="author-view-title">Información del Autor</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('author-view-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="profile-header">
+                                <div class="author-avatar-lg" id="author-view-avatar">A</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="font-semibold" id="author-view-name" style="font-size:1.15rem;"></div>
+                                    <div class="text-sm text-muted" id="author-view-nationality"></div>
+                                    <div class="mt-1" id="author-view-badges"></div>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-section-title">Biografía</div>
+                                <div class="text-sm" id="author-view-bio" style="color:var(--gray-600);white-space:pre-line;"></div>
+                            </div>
+                            <div class="detail-section" style="margin-bottom:0;">
+                                <div class="detail-section-title">Libros del Autor (<span id="author-view-books-count">0</span>)</div>
+                                <div class="table-wrapper table-shrink">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Título</th>
+                                                <th>Precio</th>
+                                                <th>Stock</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="author-view-books-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="author-view-edit-btn" onclick="openAuthorModal(currentViewAuthorId)">✎ Editar</button>
+                            <button type="button" class="btn btn-ghost" onclick="Modal.hide('author-view-modal')">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var editingAuthorId = null;
+        var currentViewAuthorId = null;
+        var pendingAuthorPhoto = '';
+        var authorsView = 'grid';
+
+        function esc(s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function avatarHTML(a, cls) {
+            var phColor = getBookCoverColor(a.id);
+            if (a.photo) return '<div class="' + cls + '"><img src="' + a.photo + '" alt="' + esc(a.name) + '"></div>';
+            return '<div class="' + cls + '" style="background:linear-gradient(135deg,' + phColor[0] + ',' + phColor[1] + ');color:' + phColor[2] + ';">' + esc((a.name || '?')[0].toUpperCase()) + '</div>';
+        }
+
+        function authorBooks(a) {
+            return DB.getBooks().filter(function(b) { return b.authorId === a.id; });
+        }
+
+        function renderAuthors() {
+            var authors = DB.getAuthors();
+            var q = getVal('author-search').toLowerCase();
+            var f = document.getElementById('author-status-filter').value;
+
+            var list = authors.filter(function(a) {
+                if (f === 'active' && !a.active) return false;
+                if (f === 'inactive' && a.active) return false;
+                if (!q) return true;
+                return a.name.toLowerCase().indexOf(q) !== -1 ||
+                    (a.nationality || '').toLowerCase().indexOf(q) !== -1;
+            });
+            list = list.slice().sort(function(a, b) {
+                return String(a.name).localeCompare(String(b.name));
+            });
+
+            setText('authors-count', list.length + ' autor' + (list.length === 1 ? '' : 'es') + ' encontrado' + (list.length === 1 ? '' : 's'));
+
+            renderAuthorsGrid(list);
+            renderAuthorsTable(list);
+        }
+
+        function renderAuthorsGrid(list) {
+            var grid = document.getElementById('authors-grid-view');
+            if (list.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;border:1px dashed var(--gray-200);border-radius:var(--radius-md);">' +
+                    '<div class="empty-state-icon">👤</div>' +
+                    '<div class="empty-state-title">Sin resultados</div>' +
+                    '<div class="empty-state-text">No se encontraron autores con los filtros actuales.</div></div>';
+                return;
+            }
+            grid.innerHTML = list.map(function(a) {
+                var count = authorBooks(a).length;
+                return '<div class="author-card fade-in">' +
+                    '<div class="author-card-top">' +
+                    avatarHTML(a, 'author-avatar-lg') +
+                    '<div>' +
+                    '<div class="author-card-name">' + esc(a.name) + '</div>' +
+                    '<div class="author-card-meta">' + esc(a.nationality || 'Nacionalidad no especificada') + '</div>' +
+                    '</div>' +
+                    '<div>' +
+                    '<span class="badge badge-primary">📚 ' + count + ' libro' + (count === 1 ? '' : 's') + '</span> ' +
+                    '<span class="badge ' + (a.active ? 'badge-success' : 'badge-gray') + '">' + (a.active ? 'Activo' : 'Inactivo') + '</span>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="author-card-footer">' +
+                    '<button type="button" class="btn btn-sm btn-outline" style="flex:1;" onclick="viewAuthor(\'' + a.id + '\')">👁 Ver</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline" style="flex:1;" onclick="openAuthorModal(\'' + a.id + '\')">✎ Editar</button>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger" style="flex:1;" onclick="deleteAuthor(\'' + a.id + '\')">🗑</button>' +
+                    '</div></div>';
+            }).join('');
+        }
+
+        function renderAuthorsTable(list) {
+            var tbody = document.getElementById('authors-tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = emptyRow(6, '👤', 'Sin autores', 'No se encontraron autores con los filtros actuales.');
+                return;
+            }
+            tbody.innerHTML = list.map(function(a) {
+                var count = authorBooks(a).length;
+                return '<tr>' +
+                    '<td>' + avatarHTML(a, 'author-avatar') + '</td>' +
+                    '<td><div class="font-semibold">' + esc(a.name) + '</div>' +
+                    '<div class="text-xs text-muted">' + esc((a.bio || '').substring(0, 60)) + (a.bio && a.bio.length > 60 ? '…' : '') + '</div></td>' +
+                    '<td>' + esc(a.nationality || '—') + '</td>' +
+                    '<td><span class="badge badge-primary">' + count + '</span></td>' +
+                    '<td>' +
+                    '<span class="badge ' + (a.active ? 'badge-success' : 'badge-gray') + '" style="display:inline-block;margin-bottom:6px;">' + (a.active ? 'Activo' : 'Inactivo') + '</span>' +
+                    '<label class="switch" title="' + (a.active ? 'Desactivar autor' : 'Activar autor') + '">' +
+                    '<input type="checkbox" ' + (a.active ? 'checked' : '') + ' onchange="toggleAuthorActive(\'' + a.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '</td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="viewAuthor(\'' + a.id + '\')" title="Ver autor">👁</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openAuthorModal(\'' + a.id + '\')" title="Editar">✎</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteAuthor(\'' + a.id + '\')" title="Eliminar">🗑</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function setAuthorsView(v) {
+            authorsView = v;
+            document.getElementById('authors-grid-view').style.display = v === 'grid' ? '' : 'none';
+            document.getElementById('authors-table-view').style.display = v === 'table' ? '' : 'none';
+            document.querySelectorAll('#view-toggle button').forEach(function(btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-view') === v);
+            });
+        }
+
+        function openAuthorModal(id) {
+            editingAuthorId = id || null;
+            pendingAuthorPhoto = '';
+            document.getElementById('author-form').reset();
+            document.getElementById('author-photo-preview').innerHTML = '<span>👤</span>';
+            document.getElementById('author-modal-title').textContent = 'Nuevo Autor';
+            document.getElementById('author-save-btn').textContent = 'Guardar Autor';
+            if (id) {
+                var a = DB.getAuthor(id);
+                if (!a) return;
+                document.getElementById('author-modal-title').textContent = 'Editar Autor';
+                document.getElementById('author-save-btn').textContent = 'Actualizar Autor';
+                setVal('author-name', a.name);
+                setVal('author-nationality', a.nationality);
+                setVal('author-bio', a.bio);
+                document.getElementById('author-active').checked = !!a.active;
+                if (a.photo) {
+                    document.getElementById('author-photo-preview').innerHTML = '<img src="' + a.photo + '" alt="Foto">';
+                }
+            } else {
+                document.getElementById('author-active').checked = true;
+            }
+            Modal.show('author-modal');
+            if (currentViewAuthorId) Modal.hide('author-view-modal');
+            setTimeout(function() { document.getElementById('author-name').focus(); }, 100);
+        }
+
+        function handleAuthorPhotoUpload(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Toast.show('Selecciona una imagen válida', 'error');
+                e.target.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                pendingAuthorPhoto = ev.target.result;
+                document.getElementById('author-photo-preview').innerHTML = '<img src="' + pendingAuthorPhoto + '" alt="Foto">';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveAuthor(e) {
+            e.preventDefault();
+            var name = getVal('author-name');
+            if (!name) {
+                Toast.show('El nombre del autor es obligatorio', 'error');
+                return;
+            }
+            var data = {
+                name: name,
+                nationality: getVal('author-nationality'),
+                bio: getVal('author-bio'),
+                active: document.getElementById('author-active').checked
+            };
+
+            var authors = DB.getAuthors();
+            if (editingAuthorId) {
+                var idx = authors.findIndex(function(x) { return x.id === editingAuthorId; });
+                if (idx === -1) return;
+                var prev = authors[idx];
+                data.photo = pendingAuthorPhoto || prev.photo || '';
+                authors[idx] = Object.assign({}, prev, data);
+                Toast.show('Autor actualizado', 'success');
+            } else {
+                data.id = DB.generateId('auth');
+                data.photo = pendingAuthorPhoto || '';
+                authors.push(data);
+                Toast.show('Autor creado correctamente', 'success');
+            }
+            DB.setAuthors(authors);
+            pendingAuthorPhoto = '';
+            Modal.hide('author-modal');
+            renderAuthors();
+        }
+
+        function toggleAuthorActive(id, el) {
+            var authors = DB.getAuthors();
+            var a = authors.find(function(x) { return x.id === id; });
+            if (!a) return;
+            a.active = el.checked;
+            DB.setAuthors(authors);
+            Toast.show(a.active ? 'Autor activado' : 'Autor desactivado', a.active ? 'success' : 'warning');
+            renderAuthors();
+        }
+
+        function deleteAuthor(id) {
+            var a = DB.getAuthor(id);
+            if (!a) return;
+            var count = authorBooks(a).length;
+            Modal.confirm('¿Eliminar al autor "' + a.name + '"? ' + (count > 0 ? 'Los ' + count + ' libro' + (count === 1 ? '' : 's') + ' asociado' + (count === 1 ? '' : 's') + ' quedar' + (count === 1 ? 'á' : 'án') + ' sin autor.' : 'Esta acción no se puede deshacer.'), function() {
+                DB.setAuthors(DB.getAuthors().filter(function(x) { return x.id !== id; }));
+                var books = DB.getBooks();
+                var changed = false;
+                books.forEach(function(b) {
+                    if (b.authorId === id) { b.authorId = ''; changed = true; }
+                });
+                if (changed) DB.setBooks(books);
+                Toast.show('Autor eliminado', 'success');
+                if (editingAuthorId === id) Modal.hide('author-modal');
+                if (currentViewAuthorId === id) Modal.hide('author-view-modal');
+                renderAuthors();
+            });
+        }
+
+        function viewAuthor(id) {
+            var a = DB.getAuthor(id);
+            if (!a) return;
+            currentViewAuthorId = id;
+
+            document.getElementById('author-view-avatar').innerHTML = a.photo
+                ? '<img src="' + a.photo + '" alt="' + esc(a.name) + '">'
+                : esc((a.name || '?')[0].toUpperCase());
+            setText('author-view-name', a.name);
+            setText('author-view-nationality', (a.nationality || 'Nacionalidad no especificada') + ' · ' + authorBooks(a).length + ' libro' + (authorBooks(a).length === 1 ? '' : 's'));
+            document.getElementById('author-view-badges').innerHTML =
+                '<span class="badge ' + (a.active ? 'badge-success' : 'badge-gray') + '">' + (a.active ? 'Activo' : 'Inactivo') + '</span>';
+
+            var bio = a.bio || 'Sin biografía registrada.';
+            setText('author-view-bio', bio);
+            setText('author-view-books-count', authorBooks(a).length);
+
+            var books = authorBooks(a).sort(function(x, y) {
+                return String(y.createdAt || '').localeCompare(String(x.createdAt || ''));
+            });
+            var tbody = document.getElementById('author-view-books-tbody');
+            if (books.length === 0) {
+                tbody.innerHTML = emptyRow(5, '📚', 'Sin libros', 'Este autor aún no tiene libros en el catálogo.');
+            } else {
+                tbody.innerHTML = books.map(function(b) {
+                    var stockBadge = b.stock <= 0 ? 'badge-gray' : (b.stock < 15 ? 'badge-warning' : 'badge-success');
+                    return '<tr>' +
+                        '<td>' + (b.cover ? '<img class="cover-thumb" src="' + b.cover + '" alt="">' : '<div class="cover-ph">📖</div>') + '</td>' +
+                        '<td>' +
+                        '<div class="font-semibold">' + esc(b.title) + '</div>' +
+                        '<div class="text-xs text-muted">' + esc(b.sku || '') + (b.publicationDate ? ' · ' + b.publicationDate.split('-')[0] : '') + '</div>' +
+                        '</td>' +
+                        '<td class="font-semibold">' + formatPrice(b.promoPrice > 0 ? b.promoPrice : b.price) + '</td>' +
+                        '<td><span class="badge ' + stockBadge + '">' + b.stock + '</span></td>' +
+                        '<td><span class="badge ' + (b.active ? 'badge-success' : 'badge-gray') + '">' + (b.active ? 'Activo' : 'Inactivo') + '</span></td>' +
+                        '</tr>';
+                }).join('');
+            }
+            Modal.show('author-view-modal');
+        }
+
+        initAdminPage('Autores');
+        if (AdminAuth.isLoggedIn()) {
+            renderAuthors();
+            setAuthorsView('grid');
+            document.getElementById('author-search').addEventListener('input', renderAuthors);
+            document.getElementById('author-status-filter').addEventListener('change', renderAuthors);
+            document.getElementById('author-form').addEventListener('submit', saveAuthor);
+            document.getElementById('author-photo-file').addEventListener('change', handleAuthorPhotoUpload);
+        }
+    </script>
+</body>
+</html>

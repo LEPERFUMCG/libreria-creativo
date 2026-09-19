@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO | Admin</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <style>
+        .seo-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        @media (min-width: 1024px) { .seo-grid { grid-template-columns: 1fr 1fr; } }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+        @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-grid .form-group { margin-bottom: 14px; }
+        .preview-box { width: 100%; min-height: 90px; border: 2px dashed var(--gray-300); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--gray-50); margin-top: 8px; }
+        .preview-box img { max-height: 110px; max-width: 100%; object-fit: contain; }
+        .og-card { background: #f9fafb; border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 14px; margin-top: 10px; }
+        .og-card-title { font-weight: 700; color: var(--gray-900); font-size: 0.95rem; margin-bottom: 4px; }
+        .og-card-desc { font-size: 0.82rem; color: var(--gray-500); }
+        .sitemap-box { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 18px; }
+        .save-section { text-align: right; padding: 20px 0 8px; }
+        .path-code { font-family: 'SF Mono', Consolas, monospace; font-size: 0.78rem; color: var(--primary); background: var(--primary-bg); padding: 2px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">SEO y Optimización</h1>
+                        <p class="text-muted text-sm mb-0">Metadatos, Open Graph y sitemap para buscadores</p>
+                    </div>
+                    <button type="button" class="btn btn-outline" onclick="downloadSitemap()">⬇ Descargar sitemap.xml</button>
+                </div>
+
+                <form id="seo-form">
+                    <div class="seo-grid" style="margin-bottom:16px;">
+                        <div class="card" style="padding:24px;">
+                            <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);">Metadatos Básicos</h3>
+                            <div class="form-group">
+                                <label class="form-label" for="seo-title">Meta Título</label>
+                                <input type="text" class="form-control" id="seo-title" placeholder="Título de la página (50-60 caracteres)">
+                                <div class="form-hint" id="seo-title-count"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="seo-desc">Meta Descripción</label>
+                                <textarea class="form-control" id="seo-desc" rows="4" placeholder="Descripción breve para resultados de búsqueda (150-160 caracteres)"></textarea>
+                                <div class="form-hint" id="seo-desc-count"></div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label" for="seo-canonical">URL Canónica</label>
+                                <input type="url" class="form-control" id="seo-canonical" placeholder="https://www.libreria-creativo.com/">
+                                <div class="form-hint">Usada como base para el sitemap y la URL canónica del sitio.</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="card" style="padding:24px;margin-bottom:24px;">
+                                <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);">Open Graph</h3>
+                                <div class="form-group">
+                                    <label class="form-label" for="seo-og-title">Título para Redes Sociales</label>
+                                    <input type="text" class="form-control" id="seo-og-title" placeholder="Título que aparecerá al compartir">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="seo-og-desc">Descripción para Redes Sociales</label>
+                                    <textarea class="form-control" id="seo-og-desc" rows="3" placeholder="Descripción que aparecerá al compartir"></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" for="seo-og-image">Imagen Open Graph (1200×630 px)</label>
+                                    <input type="file" class="form-control" id="seo-og-image" accept="image/*">
+                                    <div class="preview-box" id="seo-og-preview"><span style="color:var(--gray-400);font-size:0.85rem;">Sin imagen seleccionada</span></div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding:24px;">
+                                <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);">Favicon</h3>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" for="seo-favicon">Icono del sitio (favicon)</label>
+                                    <input type="file" class="form-control" id="seo-favicon" accept="image/*">
+                                    <div class="preview-box" id="seo-favicon-preview"><span style="color:var(--gray-400);font-size:0.85rem;">Sin favicon seleccionado</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="card" style="padding:24px;margin-bottom:24px;">
+                    <div class="flex items-center justify-between flex-wrap" style="gap:12px;margin-bottom:16px;">
+                        <h3 style="font-size:1.05rem;font-weight:700;">Sitemap</h3>
+                        <div>
+                            <span class="badge badge-success">Activo</span>
+                            <span class="badge badge-info">sitemap.xml</span>
+                        </div>
+                    </div>
+                    <div class="sitemap-box">
+                        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;">
+                            <div>
+                                <div class="font-semibold">Estado del sitemap</div>
+                                <div class="text-muted text-sm">El sitemap contiene <strong id="sitemap-count">0</strong> URLs
+                                    indexables. Última generación: <strong id="sitemap-date">—</strong>.</div>
+                                <div class="text-muted text-sm mt-1">Asegúrate de enviarlo en Google Search Console y Bing Webmaster Tools.</div>
+                            </div>
+                            <button type="button" class="btn btn-outline" onclick="downloadSitemap()">⬇ Generar sitemap.xml</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:24px;margin-bottom:32px;">
+                    <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--gray-100);">Elementos del Sitio</h3>
+                    <div class="table-wrapper" style="box-shadow:none;border-radius:0;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Página</th>
+                                    <th>Ruta</th>
+                                    <th>Meta Título</th>
+                                </tr>
+                            </thead>
+                            <tbody id="elements-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="save-section">
+                    <button type="button" class="btn btn-primary" onclick="saveSeo()">💾 Guardar Configuración SEO</button>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var pendingOgImage = '';
+        var pendingFavicon = '';
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function pageEntries() {
+            var config = DB.getConfig();
+            var pages = DB.getPages();
+            var base = config.storeName || 'Librería';
+            var meta = config.metaTitle || (base + ' - Tienda de libros');
+            var entries = [
+                { label: 'Inicio', path: 'index.html', meta: meta },
+                { label: 'Catálogo', path: 'catalog.html', meta: base + ' - Catálogo' },
+                { label: 'Detalle de Libro', path: 'book.html', meta: base + ' - Libros' },
+                { label: 'Contacto', path: 'contact.html', meta: base + ' - Contacto' },
+                { label: 'Carrito', path: 'cart.html', meta: base + ' - Carrito de Compras' },
+                { label: 'Finalizar Compra', path: 'checkout.html', meta: base + ' - Finalizar Compra' },
+                { label: 'Iniciar Sesión', path: 'login.html', meta: base + ' - Iniciar Sesión' },
+                { label: 'Crear Cuenta', path: 'register.html', meta: base + ' - Crear Cuenta' }
+            ];
+            var pageKeys = ['about', 'faq', 'privacy', 'terms', 'shipping', 'returns'];
+            pageKeys.forEach(function(key) {
+                var pg = pages[key];
+                entries.push({
+                    label: pg ? pg.title : key,
+                    path: 'page.html?page=' + key,
+                    meta: base + ' - ' + (pg ? pg.title : key)
+                });
+            });
+            return entries;
+        }
+
+        function renderElements() {
+            var rows = pageEntries();
+            setText('sitemap-count', rows.length);
+            setText('sitemap-date', new Date().toLocaleDateString('es-HN', { year: 'numeric', month: 'long', day: 'numeric' }));
+            var tbody = document.getElementById('elements-tbody');
+            tbody.innerHTML = rows.map(function(r) {
+                return '<tr>' +
+                    '<td class="font-semibold">' + r.label + '</td>' +
+                    '<td><span class="path-code">' + r.path + '</span></td>' +
+                    '<td class="text-muted">' + r.meta + '</td></tr>';
+            }).join('');
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function fillForm(config) {
+            setVal('seo-title', config.metaTitle || '');
+            setVal('seo-desc', config.metaDescription || '');
+            setVal('seo-canonical', config.canonicalURL || '');
+            setVal('seo-og-title', config.ogTitle || config.metaTitle || '');
+            setVal('seo-og-desc', config.ogDescription || config.metaDescription || '');
+            updateCounters();
+            if (config.ogImage) {
+                document.getElementById('seo-og-preview').innerHTML = '<img src="' + config.ogImage + '" alt="Open Graph">';
+                pendingOgImage = config.ogImage;
+            }
+            if (config.favicon) {
+                document.getElementById('seo-favicon-preview').innerHTML = '<img src="' + config.favicon + '" alt="Favicon">';
+                pendingFavicon = config.favicon;
+            }
+        }
+
+        function updateCounters() {
+            var t = document.getElementById('seo-title').value;
+            var d = document.getElementById('seo-desc').value;
+            var tCount = document.getElementById('seo-title-count');
+            var dCount = document.getElementById('seo-desc-count');
+            if (tCount) tCount.textContent = t.length + ' caracteres (' + (t.length <= 60 ? 'recomendado' : 'demasiado largo') + ')';
+            if (dCount) dCount.textContent = d.length + ' caracteres (' + (d.length <= 160 ? 'recomendado' : 'demasiado largo') + ')';
+        }
+
+        function handleImageUpload(inputId, previewId, onLoaded) {
+            var file = document.getElementById(inputId).files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Toast.show('Selecciona una imagen válida', 'error');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById(previewId).innerHTML = '<img src="' + ev.target.result + '" alt="">';
+                if (onLoaded) onLoaded(ev.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function baseUrl() {
+            var canon = document.getElementById('seo-canonical').value.trim();
+            if (canon) {
+                return canon.replace(/\/+$/, '');
+            }
+            var origin = window.location.origin || '';
+            return origin && origin !== 'null' ? origin : 'https://www.libreria-creativo.com';
+        }
+
+        function downloadSitemap() {
+            var entries = pageEntries();
+            var base = baseUrl();
+            var head = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+            var body = entries.map(function(r) {
+                return '  <url>\n' +
+                    '    <loc>' + base + '/' + r.path + '</loc>\n' +
+                    '    <lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod>\n' +
+                    (r.path === 'index.html'
+                        ? '    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n'
+                        : '    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n') +
+                    '  </url>';
+            }).join('\n');
+            var tail = '\n</urlset>';
+            var xml = head + body + tail;
+
+            var blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'sitemap.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            Toast.show('sitemap.xml generado con ' + entries.length + ' URLs', 'success');
+        }
+
+        function saveSeo() {
+            var config = DB.getConfig();
+            var updated = Object.assign({}, config, {
+                metaTitle: document.getElementById('seo-title').value.trim(),
+                metaDescription: document.getElementById('seo-desc').value.trim(),
+                canonicalURL: document.getElementById('seo-canonical').value.trim(),
+                ogTitle: document.getElementById('seo-og-title').value.trim(),
+                ogDescription: document.getElementById('seo-og-desc').value.trim(),
+                ogImage: pendingOgImage || config.ogImage || '',
+                favicon: pendingFavicon || config.favicon || ''
+            });
+            DB.setConfig(updated);
+            Toast.show('Configuración SEO guardada correctamente', 'success');
+        }
+
+        initAdminPage('SEO');
+        if (AdminAuth.isLoggedIn()) {
+            fillForm(DB.getConfig());
+            renderElements();
+            document.getElementById('seo-title').addEventListener('input', updateCounters);
+            document.getElementById('seo-desc').addEventListener('input', updateCounters);
+            document.getElementById('seo-og-image').addEventListener('change', function() {
+                handleImageUpload('seo-og-image', 'seo-og-preview', function(src) { pendingOgImage = src; });
+            });
+            document.getElementById('seo-favicon').addEventListener('change', function() {
+                handleImageUpload('seo-favicon', 'seo-favicon-preview', function(src) { pendingFavicon = src; });
+            });
+        }
+    </script>
+</body>
+</html>

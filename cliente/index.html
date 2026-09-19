@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Encuentra los mejores libros en LIBRERIA CREATIVO. Catálogo amplio, precios accesibles y envíos a todo el país.">
+  <meta name="robots" content="index, follow">
+  <title>LIBRERIA CREATIVO - Tu tienda de libros en línea</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .hero-image {
+      border-radius: var(--radius-lg);
+      max-height: 260px;
+      width: auto;
+      margin-bottom: 16px;
+    }
+    .category-count {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+    .author-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .author-card {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--gray-800);
+    }
+    .author-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      color: var(--gray-800);
+    }
+    .author-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      overflow: hidden;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .author-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .author-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .author-count {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+    .section-link i {
+      width: 14px;
+      height: 14px;
+    }
+    @media (min-width: 640px) {
+      .author-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .author-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div id="mobile-nav" class="mobile-nav"></div>
+
+  <header class="site-header">
+    <div id="header-top" class="header-top"></div>
+    <div id="header-main" class="header-main"></div>
+  </header>
+
+  <main>
+    <section class="hero-banner" id="hero-banner">
+      <div class="container">
+        <div class="hero-content" id="hero-content"></div>
+      </div>
+    </section>
+
+    <section class="section" id="featured-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="featured-title">Libros Destacados</h2>
+          <a href="catalog.html?featured=1" class="section-link">Ver todos <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+        </div>
+        <div class="book-carousel" id="featured-carousel"></div>
+      </div>
+    </section>
+
+    <section class="section" id="new-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="new-title">Nuevos Libros</h2>
+          <a href="catalog.html" class="section-link">Ver todos <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+        </div>
+        <div class="book-carousel" id="new-carousel"></div>
+      </div>
+    </section>
+
+    <section class="section" id="bestsellers-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="bestsellers-title">Más Vendidos</h2>
+          <a href="catalog.html?bestseller=1" class="section-link">Ver todos <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+        </div>
+        <div class="book-carousel" id="bestsellers-carousel"></div>
+      </div>
+    </section>
+
+    <section class="section" id="offers-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="offers-title">Ofertas y Promociones</h2>
+          <a href="catalog.html?offers=1" class="section-link">Ver todos <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+        </div>
+        <div class="book-carousel" id="offers-carousel"></div>
+      </div>
+    </section>
+
+    <section class="section" id="categories-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="categories-title">Categorías</h2>
+          <a href="catalog.html" class="section-link">Ver todas <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+        </div>
+        <div class="category-grid" id="category-grid"></div>
+      </div>
+    </section>
+
+    <section class="section" id="authors-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" id="authors-title">Autores Destacados</h2>
+          <a href="catalog.html" class="section-link">Ver autores <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+        </div>
+        <div class="author-grid" id="author-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script>
+    initPublicPage();
+
+    const config = DB.getConfig();
+    const books = DB.getBooks().filter(b => b.active);
+    const categories = DB.getCategories().filter(c => c.active);
+    const authors = DB.getAuthors().filter(a => a.active);
+
+    function renderCarousel(containerId, list) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = list.map(b => renderBookCard(b, config)).join('');
+    }
+
+    function hideSectionIfEmpty(sectionId, list) {
+      if (!list || list.length === 0) {
+        const el = document.getElementById(sectionId);
+        if (el) el.style.display = 'none';
+      }
+    }
+
+    function getCategoryIcon(c) {
+      const map = {
+        ficcion: 'lucide-book-open',
+        'no-ficcion': 'lucide-globe',
+        infantil: 'lucide-smile',
+        academico: 'lucide-graduation-cap',
+        tecnologia: 'lucide-cpu',
+        'arte-cultura': 'lucide-palette',
+        autoayuda: 'lucide-sparkles',
+        ciencias: 'lucide-microscope'
+      };
+      return map[c.slug] || 'lucide-book';
+    }
+
+    // — Hero banner
+    const heroContent = document.getElementById('hero-content');
+    if (heroContent) {
+      const banner = config.banner || {};
+      const btnLink = (banner.buttonLink || 'catalog.html').replace(/^cliente\//, '');
+      heroContent.innerHTML = `
+        ${banner.image ? `<img src="${banner.image}" alt="${banner.title || config.storeName}" class="hero-image">` : ''}
+        <h1 class="hero-title">${banner.title || config.storeName}</h1>
+        <p class="hero-subtitle">${banner.subtitle || config.storeSlogan}</p>
+        <a href="${btnLink}" class="hero-btn"><i class="lucide-arrow-right" style="width:16px;height:16px;"></i> ${banner.buttonText || 'Explorar Catálogo'}</a>`;
+    }
+
+    // — Featured
+    const featured = books.filter(b => b.featured);
+    renderCarousel('featured-carousel', featured.slice(0, 10));
+    hideSectionIfEmpty('featured-section', featured);
+
+    // — New
+    const newest = [...books].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    renderCarousel('new-carousel', newest.slice(0, 10));
+    hideSectionIfEmpty('new-section', newest);
+
+    // — Bestsellers
+    const bestsellers = books.filter(b => b.bestseller);
+    renderCarousel('bestsellers-carousel', bestsellers.slice(0, 10));
+    hideSectionIfEmpty('bestsellers-section', bestsellers);
+
+    // — Offers
+    const offers = books.filter(b => b.promoPrice > 0);
+    renderCarousel('offers-carousel', offers.slice(0, 10));
+    hideSectionIfEmpty('offers-section', offers);
+
+    // — Categories
+    const categoryGrid = document.getElementById('category-grid');
+    if (categoryGrid) {
+      categoryGrid.innerHTML = categories.map(c => {
+        const count = books.filter(b => b.categoryId === c.id).length;
+        return `
+          <a href="catalog.html?category=${c.id}" class="category-card">
+            <div class="category-icon"><i class="${getCategoryIcon(c)}" style="width:22px;height:22px;"></i></div>
+            <div class="category-name">${c.name}</div>
+            <div class="category-count">${count} ${count === 1 ? 'libro' : 'libros'}</div>
+          </a>`;
+      }).join('');
+    }
+    hideSectionIfEmpty('categories-section', categories);
+
+    // — Authors
+    let authorCounts = [];
+    const authorGrid = document.getElementById('author-grid');
+    if (authorGrid) {
+      authorCounts = authors
+        .map(a => ({ author: a, count: books.filter(b => b.authorId === a.id).length }))
+        .filter(x => x.count > 0)
+        .sort((x, y) => y.count - x.count);
+      const avColors = [['#2563eb', '#eff6ff'], ['#9333ea', '#f3e8ff'], ['#0d9488', '#ccfbf1'], ['#dc2626', '#fee2e2'], ['#d97706', '#fef3c7']];
+      authorGrid.innerHTML = authorCounts.map((x, i) => {
+        const a = x.author;
+        const initial = (a.name || 'A').trim()[0].toUpperCase();
+        const [fg, bg] = avColors[i % avColors.length];
+        return `
+          <a href="catalog.html?author=${a.id}" class="author-card">
+            <div class="author-avatar" style="background:${bg};color:${fg};">${a.photo ? `<img src="${a.photo}" alt="${a.name}">` : initial}</div>
+            <div class="author-name">${a.name}</div>
+            <div class="author-count">${x.count} ${x.count === 1 ? 'libro' : 'libros'}</div>
+          </a>`;
+      }).join('');
+    }
+    hideSectionIfEmpty('authors-section', authorCounts);
+
+    // — Homepage section visibility from config
+    const sectionMap = {
+      featured: 'featured-section',
+      new: 'new-section',
+      bestsellers: 'bestsellers-section',
+      offers: 'offers-section',
+      categories: 'categories-section',
+      authors: 'authors-section'
+    };
+    const sectionTitleMap = {
+      featured: 'featured-title',
+      new: 'new-title',
+      bestsellers: 'bestsellers-title',
+      offers: 'offers-title',
+      categories: 'categories-title',
+      authors: 'authors-title'
+    };
+    (config.homepageSections || []).forEach(s => {
+      const sectionEl = document.getElementById(sectionMap[s.id]);
+      if (sectionEl && s.visible === false) sectionEl.style.display = 'none';
+      const titleEl = document.getElementById(sectionTitleMap[s.id]);
+      if (titleEl && s.title) titleEl.textContent = s.title;
+    });
+  </script>
+</body>
+</html>

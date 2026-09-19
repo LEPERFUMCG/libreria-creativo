@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página de Inicio | Admin</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .config-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:24px;margin-bottom:24px}
+    .config-card h3{font-size:1.1rem;font-weight:600;color:#1a1a2e;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .form-group input[type="color"]{height:48px;padding:4px;cursor:pointer}
+    .form-group input[type="file"]{padding:8px;background:#f9fafb}
+    .preview-box{width:100%;height:120px;border:2px dashed #d1d5db;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-top:8px;overflow:hidden;background:#f9fafb}
+    .preview-box img{max-height:100%;max-width:100%;object-fit:contain}
+    .preview-box.banner-preview{height:200px;background-size:cover;background-position:center}
+    .color-group{display:flex;gap:16px;flex-wrap:wrap}
+    .color-group .form-group{flex:1;min-width:150px}
+    .save-section{text-align:right;padding:20px 0}
+    .save-btn{background:#2563eb;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s}
+    .save-btn:hover{background:#1d4ed8}
+
+    .section-list{list-style:none;padding:0;margin:0}
+    .section-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;background:#fafafa;transition:background .2s}
+    .section-item:hover{background:#f0f4ff}
+    .section-item .drag-handle{cursor:grab;color:#9ca3af;font-size:1.2rem;user-select:none}
+    .section-item .section-name{flex:1;font-weight:500;font-size:.9rem}
+    .section-item .section-actions{display:flex;gap:8px}
+    .arrow-btn{background:none;border:1px solid #d1d5db;border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;color:#374151}
+    .arrow-btn:hover{background:#e5e7eb;border-color:#9ca3af}
+    .arrow-btn:disabled{opacity:.3;cursor:not-allowed}
+
+    .toggle-switch{position:relative;display:inline-block;width:44px;height:24px}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#d1d5db;border-radius:24px;transition:.3s}
+    .toggle-slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle-switch input:checked + .toggle-slider{background:#2563eb}
+    .toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
+
+    .banner-preview-container{margin-top:12px;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
+    .banner-preview-live{width:100%;height:220px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;position:relative;overflow:hidden}
+    .banner-preview-live img{position:absolute;width:100%;height:100%;object-fit:cover;opacity:.5}
+    .banner-preview-live .banner-text{position:relative;z-index:1;text-align:center;padding:20px}
+    .banner-preview-live .banner-text h2{font-size:1.4rem;font-weight:700;margin:0 0 4px}
+    .banner-preview-live .banner-text p{font-size:.9rem;margin:0 0 12px;opacity:.9}
+    .banner-preview-live .banner-text span.btn-demo{background:#2563eb;padding:8px 20px;border-radius:6px;font-size:.85rem;font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+    <aside class="admin-sidebar" id="admin-sidebar"></aside>
+    <main class="admin-main">
+      <header class="admin-topbar" id="admin-topbar"></header>
+      <div class="admin-content">
+
+        <form id="homepage-form">
+          <div class="config-card">
+            <h3>Banner Principal</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Imagen del Banner</label>
+                <input type="file" id="hp-banner-img" accept="image/*">
+              </div>
+              <div class="form-group">
+                <label>Título del Banner</label>
+                <input type="text" id="hp-banner-title" placeholder="Bienvenido a nuestra librería">
+              </div>
+              <div class="form-group">
+                <label>Subtítulo</label>
+                <input type="text" id="hp-banner-subtitle" placeholder="Los mejores libros al mejor precio">
+              </div>
+              <div class="form-group">
+                <label>Texto del Botón</label>
+                <input type="text" id="hp-banner-btn-text" placeholder="Explorar Catálogo">
+              </div>
+              <div class="form-group">
+                <label>Enlace del Botón</label>
+                <input type="text" id="hp-banner-btn-link" placeholder="#catalogo">
+              </div>
+            </div>
+            <label style="display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:6px">Vista Previa</label>
+            <div class="banner-preview-container">
+              <div class="banner-preview-live" id="banner-live-preview">
+                <img id="banner-img-preview" src="" alt="" style="display:none">
+                <div class="banner-text">
+                  <h2 id="banner-title-demo">Título del Banner</h2>
+                  <p id="banner-subtitle-demo">Subtítulo aquí</p>
+                  <span class="btn-demo" id="banner-btn-demo">Botón</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Logo y Favicon</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Logo</label>
+                <input type="file" id="hp-logo-input" accept="image/*">
+                <div class="preview-box" id="hp-logo-preview"></div>
+              </div>
+              <div class="form-group">
+                <label>Favicon</label>
+                <input type="file" id="hp-favicon-input" accept="image/*">
+                <div class="preview-box" id="hp-favicon-preview"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Identidad</h3>
+            <div class="form-group">
+              <label>Nombre de la Librería</label>
+              <input type="text" id="hp-store-name" placeholder="Nombre de la librería">
+            </div>
+            <div class="color-group" style="margin-top:12px">
+              <div class="form-group">
+                <label>Color Primario</label>
+                <input type="color" id="hp-color-primary" value="#2563eb">
+              </div>
+              <div class="form-group">
+                <label>Color Secundario</label>
+                <input type="color" id="hp-color-secondary" value="#1a1a2e">
+              </div>
+              <div class="form-group">
+                <label>Color Acento</label>
+                <input type="color" id="hp-color-accent" value="#f59e0b">
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Secciones Visibles en Página de Inicio</h3>
+            <div class="form-grid">
+              <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px">
+                <span style="font-weight:500;font-size:.9rem">Libros Destacados</span>
+                <label class="toggle-switch"><input type="checkbox" id="sec-featured" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px">
+                <span style="font-weight:500;font-size:.9rem">Nuevos Lanzamientos</span>
+                <label class="toggle-switch"><input type="checkbox" id="sec-new" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px">
+                <span style="font-weight:500;font-size:.9rem">Más Vendidos</span>
+                <label class="toggle-switch"><input type="checkbox" id="sec-bestsellers" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px">
+                <span style="font-weight:500;font-size:.9rem">Ofertas</span>
+                <label class="toggle-switch"><input type="checkbox" id="sec-offers" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px">
+                <span style="font-weight:500;font-size:.9rem">Categorías</span>
+                <label class="toggle-switch"><input type="checkbox" id="sec-categories" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px">
+                <span style="font-weight:500;font-size:.9rem">Autores</span>
+                <label class="toggle-switch"><input type="checkbox" id="sec-authors"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Orden de Secciones</h3>
+            <ul class="section-list" id="section-order-list"></ul>
+            <p style="font-size:.8rem;color:#9ca3af;margin-top:8px">Usa las flechas para reordenar las secciones.</p>
+          </div>
+
+          <div class="save-section">
+            <button type="submit" class="save-btn">Guardar Cambios</button>
+          </div>
+        </form>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    initAdminPage('Página de Inicio');
+
+    const config = DB.getConfig();
+    const sectionOrder = config.sectionOrder || ['featured', 'new', 'bestsellers', 'offers', 'categories', 'authors'];
+    const sectionLabels = {
+      featured: 'Libros Destacados',
+      new: 'Nuevos Lanzamientos',
+      bestsellers: 'Más Vendidos',
+      offers: 'Ofertas',
+      categories: 'Categorías',
+      authors: 'Autores'
+    };
+
+    function fillForm(cfg) {
+      document.getElementById('hp-banner-title').value = cfg.banner?.title || '';
+      document.getElementById('hp-banner-subtitle').value = cfg.banner?.subtitle || '';
+      document.getElementById('hp-banner-btn-text').value = cfg.banner?.btnText || '';
+      document.getElementById('hp-banner-btn-link').value = cfg.banner?.btnLink || '#';
+      document.getElementById('hp-store-name').value = cfg.businessName || '';
+      document.getElementById('hp-color-primary').value = cfg.primaryColor || '#2563eb';
+      document.getElementById('hp-color-secondary').value = cfg.secondaryColor || '#1a1a2e';
+      document.getElementById('hp-color-accent').value = cfg.accentColor || '#f59e0b';
+
+      const vis = cfg.visibleSections || {};
+      document.getElementById('sec-featured').checked = vis.featured !== false;
+      document.getElementById('sec-new').checked = vis.new !== false;
+      document.getElementById('sec-bestsellers').checked = vis.bestsellers !== false;
+      document.getElementById('sec-offers').checked = vis.offers !== false;
+      document.getElementById('sec-categories').checked = vis.categories !== false;
+      document.getElementById('sec-authors').checked = vis.authors === true;
+
+      if (cfg.banner?.image) {
+        document.getElementById('banner-img-preview').src = cfg.banner.image;
+        document.getElementById('banner-img-preview').style.display = 'block';
+      }
+      if (cfg.logo) {
+        document.getElementById('hp-logo-preview').innerHTML = '<img src="' + cfg.logo + '">';
+      }
+      if (cfg.favicon) {
+        document.getElementById('hp-favicon-preview').innerHTML = '<img src="' + cfg.favicon + '">';
+      }
+
+      updateBannerPreview();
+    }
+
+    function updateBannerPreview() {
+      document.getElementById('banner-title-demo').textContent = document.getElementById('hp-banner-title').value || 'Título del Banner';
+      document.getElementById('banner-subtitle-demo').textContent = document.getElementById('hp-banner-subtitle').value || 'Subtítulo aquí';
+      document.getElementById('banner-btn-demo').textContent = document.getElementById('hp-banner-btn-text').value || 'Botón';
+    }
+
+    function renderSectionOrder() {
+      const list = document.getElementById('section-order-list');
+      list.innerHTML = '';
+      sectionOrder.forEach(function (key, idx) {
+        const li = document.createElement('li');
+        li.className = 'section-item';
+        li.innerHTML =
+          '<span class="section-actions">' +
+            '<button type="button" class="arrow-btn" data-dir="up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + '>&#9650;</button>' +
+            '<button type="button" class="arrow-btn" data-dir="down" data-idx="' + idx + '"' + (idx === sectionOrder.length - 1 ? ' disabled' : '') + '>&#9660;</button>' +
+          '</span>' +
+          '<span class="section-name">' + sectionLabels[key] + '</span>';
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll('.arrow-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const idx = parseInt(this.dataset.idx);
+          const dir = this.dataset.dir;
+          if (dir === 'up' && idx > 0) {
+            [sectionOrder[idx - 1], sectionOrder[idx]] = [sectionOrder[idx], sectionOrder[idx - 1]];
+          } else if (dir === 'down' && idx < sectionOrder.length - 1) {
+            [sectionOrder[idx], sectionOrder[idx + 1]] = [sectionOrder[idx + 1], sectionOrder[idx]];
+          }
+          renderSectionOrder();
+        });
+      });
+    }
+
+    document.getElementById('hp-banner-title').addEventListener('input', updateBannerPreview);
+    document.getElementById('hp-banner-subtitle').addEventListener('input', updateBannerPreview);
+    document.getElementById('hp-banner-btn-text').addEventListener('input', updateBannerPreview);
+
+    document.getElementById('hp-banner-img').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.getElementById('banner-img-preview');
+        img.src = e.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('hp-logo-input').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('hp-logo-preview').innerHTML = '<img src="' + e.target.result + '">';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('hp-favicon-input').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('hp-favicon-preview').innerHTML = '<img src="' + e.target.result + '">';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('homepage-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const bannerImg = document.getElementById('banner-img-preview');
+      const logoImg = document.querySelector('#hp-logo-preview img');
+      const faviconImg = document.querySelector('#hp-favicon-preview img');
+
+      const updated = {
+        ...config,
+        businessName: document.getElementById('hp-store-name').value,
+        primaryColor: document.getElementById('hp-color-primary').value,
+        secondaryColor: document.getElementById('hp-color-secondary').value,
+        accentColor: document.getElementById('hp-color-accent').value,
+        logo: logoImg ? logoImg.src : config.logo,
+        favicon: faviconImg ? faviconImg.src : config.favicon,
+        banner: {
+          image: (bannerImg && bannerImg.style.display !== 'none') ? bannerImg.src : (config.banner?.image || ''),
+          title: document.getElementById('hp-banner-title').value,
+          subtitle: document.getElementById('hp-banner-subtitle').value,
+          btnText: document.getElementById('hp-banner-btn-text').value,
+          btnLink: document.getElementById('hp-banner-btn-link').value
+        },
+        visibleSections: {
+          featured: document.getElementById('sec-featured').checked,
+          new: document.getElementById('sec-new').checked,
+          bestsellers: document.getElementById('sec-bestsellers').checked,
+          offers: document.getElementById('sec-offers').checked,
+          categories: document.getElementById('sec-categories').checked,
+          authors: document.getElementById('sec-authors').checked
+        },
+        sectionOrder: sectionOrder.slice()
+      };
+
+      DB.setConfig(updated);
+      showToast('Página de inicio actualizada');
+    });
+
+    fillForm(config);
+    renderSectionOrder();
+  </script>
+</body>
+</html>

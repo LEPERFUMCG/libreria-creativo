@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zonas de Envío | Admin</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+    .page-header h2{font-size:1.2rem;font-weight:700;color:#1a1a2e;margin:0}
+    .add-btn{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s;display:flex;align-items:center;gap:6px}
+    .add-btn:hover{background:#1d4ed8}
+
+    .info-card{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .info-card .info-icon{font-size:1.4rem}
+    .info-card .info-text{flex:1;min-width:200px}
+    .info-card .info-text strong{color:#1e40af;font-size:.9rem}
+    .info-card .info-text p{color:#3b82f6;font-size:.85rem;margin:2px 0 0}
+    .info-card .info-input{display:flex;align-items:center;gap:8px}
+    .info-card .info-input input{width:100px;padding:8px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:.9rem;font-family:'Inter',sans-serif}
+    .info-card .info-input input:focus{outline:none;border-color:#2563eb}
+    .info-card .info-input button{background:#2563eb;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+    .info-card .info-input button:hover{background:#1d4ed8}
+
+    .data-table-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden}
+    .data-table{width:100%;border-collapse:collapse}
+    .data-table th{background:#f9fafb;padding:12px 16px;text-align:left;font-size:.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb}
+    .data-table td{padding:14px 16px;font-size:.9rem;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+    .data-table tr:hover td{background:#fafafa}
+    .data-table .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+    .badge-active{background:#dcfce7;color:#16a34a}
+    .badge-inactive{background:#fee2e2;color:#dc2626}
+    .badge-fixed{background:#eff6ff;color:#2563eb}
+    .badge-variable{background:#fef3c7;color:#d97706}
+    .table-actions{display:flex;gap:6px}
+    .table-actions button{background:none;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:.8rem;transition:all .2s}
+    .table-actions .edit-btn{color:#2563eb}
+    .table-actions .edit-btn:hover{background:#eff6ff;border-color:#2563eb}
+    .table-actions .delete-btn{color:#dc2626}
+    .table-actions .delete-btn:hover{background:#fef2f2;border-color:#dc2626}
+
+    .mobile-card{display:none;background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;margin-bottom:12px}
+    .mobile-card .card-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.85rem}
+    .mobile-card .card-row .label{color:#9ca3af;font-weight:500}
+    .mobile-card .card-row .value{font-weight:600;color:#374151}
+    .mobile-card .card-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6}
+
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:#fff;border-radius:12px;padding:28px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+    .modal h3{font-size:1.1rem;font-weight:600;color:#1a1a2e;margin:0 0 20px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-group input,.form-group select{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif}
+    .form-group input:focus,.form-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:20px}
+    .modal-actions .cancel-btn{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
+    .modal-actions .cancel-btn:hover{background:#e5e7eb}
+    .modal-actions .confirm-btn{background:#2563eb;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+    .modal-actions .confirm-btn:hover{background:#1d4ed8}
+
+    @media(max-width:640px){
+      .data-table-card{display:none}
+      .mobile-card{display:block}
+    }
+    @media(min-width:641px){
+      .mobile-card{display:none!important}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+    <aside class="admin-sidebar" id="admin-sidebar"></aside>
+    <main class="admin-main">
+      <header class="admin-topbar" id="admin-topbar"></header>
+      <div class="admin-content">
+
+        <div class="info-card">
+          <span class="info-icon">&#128666;</span>
+          <div class="info-text">
+            <strong>Envío Gratis</strong>
+            <p>Configura el monto mínimo de compra para ofrecer envío gratis a tus clientes.</p>
+          </div>
+          <div class="info-input">
+            <span style="font-size:.9rem;color:#374151">$</span>
+            <input type="number" id="free-shipping-input" min="0" step="0.01" placeholder="50">
+            <button id="save-free-shipping">Guardar</button>
+          </div>
+        </div>
+
+        <div class="page-header">
+          <h2>Zonas de Envío</h2>
+          <button class="add-btn" id="add-zone-btn">+ Nueva Zona</button>
+        </div>
+
+        <div class="data-table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Zona</th>
+                <th>Tipo</th>
+                <th>Costo</th>
+                <th>Activo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="zones-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="zones-mobile"></div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="zone-modal">
+    <div class="modal">
+      <h3 id="zone-modal-title">Nueva Zona de Envío</h3>
+      <form id="zone-form">
+        <input type="hidden" id="zone-id">
+        <div class="form-group">
+          <label>Nombre de la Zona</label>
+          <input type="text" id="zone-name" placeholder="Ej: San Salvador, Nacional" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="zone-type">
+            <option value="fixed">Costo Fijo</option>
+            <option value="variable">Costo Variable</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Costo ($)</label>
+          <input type="number" id="zone-cost" min="0" step="0.01" placeholder="5.00" required>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="zone-active" checked style="width:auto">
+          <label for="zone-active" style="margin:0">Zona Activa</label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" id="zone-cancel-btn">Cancelar</button>
+          <button type="submit" class="confirm-btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    initAdminPage('Envíos');
+
+    var zones = DB.getShippingZones() || [];
+    var config = DB.getConfig();
+    var editingIdx = -1;
+
+    document.getElementById('free-shipping-input').value = config.freeShippingMin ?? 50;
+
+    document.getElementById('save-free-shipping').addEventListener('click', function () {
+      config.freeShippingMin = parseFloat(document.getElementById('free-shipping-input').value) || 0;
+      DB.setConfig(config);
+      showToast('Monto de envío gratis actualizado');
+    });
+
+    function generateId() {
+      return 'sz_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    }
+
+    function renderZones() {
+      var tbody = document.getElementById('zones-tbody');
+      var mobile = document.getElementById('zones-mobile');
+      tbody.innerHTML = '';
+      mobile.innerHTML = '';
+
+      if (zones.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:32px">No hay zonas de envío registradas</td></tr>';
+        mobile.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:20px">No hay zonas de envío registradas</p>';
+        return;
+      }
+
+      zones.forEach(function (zone, idx) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td style="font-weight:600">' + escapeHtml(zone.name) + '</td>' +
+          '<td><span class="badge ' + (zone.type === 'fixed' ? 'badge-fixed' : 'badge-variable') + '">' + (zone.type === 'fixed' ? 'Fijo' : 'Variable') + '</span></td>' +
+          '<td>$' + parseFloat(zone.cost).toFixed(2) + '</td>' +
+          '<td><span class="badge ' + (zone.active ? 'badge-active' : 'badge-inactive') + '">' + (zone.active ? 'Activo' : 'Inactivo') + '</span></td>' +
+          '<td><div class="table-actions">' +
+            '<button class="edit-btn" data-idx="' + idx + '">&#9998; Editar</button>' +
+            '<button class="delete-btn" data-idx="' + idx + '">&#128465; Eliminar</button>' +
+          '</div></td>';
+        tbody.appendChild(tr);
+
+        var card = document.createElement('div');
+        card.className = 'mobile-card';
+        card.innerHTML =
+          '<div class="card-row"><span class="label">Zona</span><span class="value">' + escapeHtml(zone.name) + '</span></div>' +
+          '<div class="card-row"><span class="label">Tipo</span><span class="value"><span class="badge ' + (zone.type === 'fixed' ? 'badge-fixed' : 'badge-variable') + '">' + (zone.type === 'fixed' ? 'Fijo' : 'Variable') + '</span></span></div>' +
+          '<div class="card-row"><span class="label">Costo</span><span class="value">$' + parseFloat(zone.cost).toFixed(2) + '</span></div>' +
+          '<div class="card-row"><span class="label">Activo</span><span class="value"><span class="badge ' + (zone.active ? 'badge-active' : 'badge-inactive') + '">' + (zone.active ? 'Sí' : 'No') + '</span></span></div>' +
+          '<div class="card-actions">' +
+            '<button class="edit-btn" data-idx="' + idx + '" style="background:none;border:1px solid #d1d5db;padding:6px 14px;border-radius:6px;color:#2563eb;font-size:.85rem;cursor:pointer;font-family:Inter,sans-serif">Editar</button>' +
+            '<button class="delete-btn" data-idx="' + idx + '" style="background:none;border:1px solid #d1d5db;padding:6px 14px;border-radius:6px;color:#dc2626;font-size:.85rem;cursor:pointer;font-family:Inter,sans-serif">Eliminar</button>' +
+          '</div>';
+        mobile.appendChild(card);
+      });
+
+      tbody.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openModal(parseInt(this.dataset.idx)); });
+      });
+      tbody.querySelectorAll('.delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { deleteZone(parseInt(this.dataset.idx)); });
+      });
+      mobile.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openModal(parseInt(this.dataset.idx)); });
+      });
+      mobile.querySelectorAll('.delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { deleteZone(parseInt(this.dataset.idx)); });
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function openModal(idx) {
+      editingIdx = idx !== undefined ? idx : -1;
+      var modal = document.getElementById('zone-modal');
+      if (editingIdx >= 0) {
+        document.getElementById('zone-modal-title').textContent = 'Editar Zona de Envío';
+        var z = zones[editingIdx];
+        document.getElementById('zone-id').value = z.id;
+        document.getElementById('zone-name').value = z.name;
+        document.getElementById('zone-type').value = z.type;
+        document.getElementById('zone-cost').value = z.cost;
+        document.getElementById('zone-active').checked = z.active;
+      } else {
+        document.getElementById('zone-modal-title').textContent = 'Nueva Zona de Envío';
+        document.getElementById('zone-form').reset();
+        document.getElementById('zone-active').checked = true;
+        document.getElementById('zone-id').value = '';
+      }
+      modal.classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('zone-modal').classList.remove('show');
+      editingIdx = -1;
+    }
+
+    function deleteZone(idx) {
+      if (!confirm('¿Eliminar la zona "' + zones[idx].name + '"?')) return;
+      zones.splice(idx, 1);
+      DB.setShippingZones(zones);
+      renderZones();
+      showToast('Zona eliminada');
+    }
+
+    document.getElementById('add-zone-btn').addEventListener('click', function () { openModal(); });
+    document.getElementById('zone-cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('zone-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.getElementById('zone-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var zoneData = {
+        id: document.getElementById('zone-id').value || generateId(),
+        name: document.getElementById('zone-name').value.trim(),
+        type: document.getElementById('zone-type').value,
+        cost: parseFloat(document.getElementById('zone-cost').value) || 0,
+        active: document.getElementById('zone-active').checked
+      };
+
+      if (editingIdx >= 0) {
+        zones[editingIdx] = zoneData;
+      } else {
+        zones.push(zoneData);
+      }
+
+      DB.setShippingZones(zones);
+      closeModal();
+      renderZones();
+      showToast(editingIdx >= 0 ? 'Zona actualizada' : 'Zona creada');
+    });
+
+    renderZones();
+  </script>
+</body>
+</html>

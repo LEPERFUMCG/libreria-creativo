@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .stat-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+                    @media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+                    @media (min-width: 1024px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+                    .charts-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+                    .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+                    @media (min-width: 768px) {
+                        .charts-grid { grid-template-columns: 1fr 1fr; }
+                        .dashboard-grid { grid-template-columns: 2fr 1fr; }
+                    }
+                    .stat-icon.gray { background: #f1f5f9; color: #64748b; }
+                    .cover-thumb {
+                        width: 44px; height: 60px; border-radius: 6px;
+                        object-fit: cover; background: var(--gray-100);
+                        flex-shrink: 0; display: block;
+                    }
+                    .cover-ph {
+                        width: 44px; height: 60px; border-radius: 6px;
+                        background: var(--primary-bg); color: var(--primary);
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.1rem; flex-shrink: 0;
+                    }
+                    .activity-list { list-style: none; margin: 0; padding: 4px 0; }
+                    .activity-item { display: flex; gap: 12px; padding: 12px 16px; align-items: flex-start; }
+                    .activity-item + .activity-item { border-top: 1px solid var(--gray-100); }
+                    .activity-icon {
+                        width: 34px; height: 34px; border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 0.9rem; flex-shrink: 0;
+                    }
+                    .activity-icon.blue { background: var(--primary-bg); }
+                    .activity-icon.green { background: var(--success-bg); }
+                    .activity-icon.yellow { background: var(--warning-bg); }
+                    .activity-icon.red { background: var(--danger-bg); }
+                    .activity-icon.purple { background: #ede9fe; }
+                    .activity-icon.gray { background: #f1f5f9; }
+                    .activity-msg { font-size: 0.85rem; color: var(--gray-700); font-weight: 500; }
+                    .activity-time { font-size: 0.72rem; color: var(--gray-500); margin-top: 2px; }
+                    .rank-chip {
+                        width: 28px; height: 28px; border-radius: 50%;
+                        background: var(--primary-bg); color: var(--primary);
+                        font-weight: 800; font-size: 0.8rem;
+                        display: flex; align-items: center; justify-content: center;
+                        flex-shrink: 0;
+                    }
+                    .table-shrink { box-shadow: none; border-radius: 0; }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Dashboard</h1>
+                        <p class="text-muted text-sm mb-0" id="dashboard-date">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="stat-grid mb-4">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-month-sales">—</div>
+                            <div class="stat-label">Ventas del Mes</div>
+                            <div class="stat-change up" id="stat-month-orders">0 pedidos</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon yellow">📋</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-pending-orders">—</div>
+                            <div class="stat-label">Pedidos Pendientes</div>
+                            <div class="stat-change down" id="stat-pending-hint">Requieren atención</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-delivered-orders">—</div>
+                            <div class="stat-label">Pedidos Entregados</div>
+                            <div class="stat-change up" id="stat-delivered-hint">Completados</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">👥</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-customers">—</div>
+                            <div class="stat-label">Clientes Registrados</div>
+                            <div class="stat-change up" id="stat-customers-hint">Cuentas activas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-grid mb-6">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">📚</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-catalog">—</div>
+                            <div class="stat-label">Productos en Catálogo</div>
+                            <div class="stat-change up" id="stat-catalog-hint">Títulos activos</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">⚠️</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-lowstock">—</div>
+                            <div class="stat-label">Stock Bajo</div>
+                            <div class="stat-change down" id="stat-lowstock-hint">Requieren reposición</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon gray">🚫</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-outstock">—</div>
+                            <div class="stat-label">Productos Agotados</div>
+                            <div class="stat-change down" id="stat-outstock-hint">Sin unidades disponibles</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">📈</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-today-sales">—</div>
+                            <div class="stat-label">Ventas de Hoy</div>
+                            <div class="stat-change up" id="stat-today-hint">Pedidos del día</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid mb-6">
+                    <div class="card">
+                        <div class="card-header">Ventas de los Últimos 7 Días</div>
+                        <div class="card-body">
+                            <div id="sales-chart"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Ventas por Categoría</div>
+                        <div class="card-body">
+                            <div id="category-chart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid mb-6">
+                    <div class="card">
+                        <div class="card-header">Pedidos Recientes</div>
+                        <div class="table-wrapper table-shrink">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Pedido</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-orders"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Actividad Reciente</div>
+                        <ul class="activity-list" id="activity-list"></ul>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">Productos con Poco Stock <span class="badge badge-warning" id="low-stock-count" style="margin-left:8px;">0</span></div>
+                        <div class="table-wrapper table-shrink">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Libro</th>
+                                        <th>SKU</th>
+                                        <th>Stock</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="low-stock-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Libros Más Vendidos</div>
+                        <div id="bestsellers-list"></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function getRefDate() {
+            var orders = DB.getOrders();
+            var ref = null;
+            orders.forEach(function(o) {
+                var d = new Date(o.createdAt);
+                if (!ref || d.getTime() > ref.getTime()) ref = d;
+            });
+            return ref || new Date();
+        }
+
+        function sameDay(a, b) {
+            return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+        }
+
+        function sameMonth(a, b) {
+            return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+        }
+
+        function sumTotals(arr) {
+            return arr.reduce(function(s, o) { return s + (o.total || 0); }, 0);
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function effectivePrice(b) {
+            return b.promoPrice > 0 ? b.promoPrice : b.price;
+        }
+
+        function coverHTML(b) {
+            return b.cover
+                ? '<img class="cover-thumb" src="' + b.cover + '" alt="">'
+                : '<div class="cover-ph">📖</div>';
+        }
+
+        function timeAgo(dateStr, ref) {
+            var diff = ref.getTime() - new Date(dateStr).getTime();
+            if (diff < 60000) return 'hace un momento';
+            var mins = Math.floor(diff / 60000);
+            if (mins < 60) return 'hace ' + mins + ' min';
+            var hrs = Math.floor(mins / 60);
+            if (hrs < 24) return 'hace ' + hrs + ' h';
+            var days = Math.floor(hrs / 24);
+            if (days < 30) return 'hace ' + days + ' d';
+            if (days < 365) return 'hace ' + Math.floor(days / 30) + ' meses';
+            return 'hace ' + Math.floor(days / 365) + ' años';
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function renderDashboard() {
+            var config = DB.getConfig();
+            var orders = DB.getOrders().filter(function(o) { return o.status !== 'cancelled'; });
+            var books = DB.getBooks();
+            var customers = DB.getCustomers();
+
+            var ref = getRefDate();
+            setText('dashboard-date', 'Información actualizada: ' + ref.toLocaleDateString('es-HN', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            }));
+
+            var monthOrders = orders.filter(function(o) { return sameMonth(new Date(o.createdAt), ref); });
+            setText('stat-month-sales', formatPrice(sumTotals(monthOrders), config));
+            setText('stat-month-orders', monthOrders.length + ' pedido' + (monthOrders.length === 1 ? '' : 's') + ' este mes');
+
+            var pending = orders.filter(function(o) { return o.status !== 'delivered'; }).length;
+            var delivered = orders.filter(function(o) { return o.status === 'delivered'; }).length;
+            setText('stat-pending-orders', pending);
+            setText('stat-pending-hint', pending > 0 ? 'Requieren atención' : 'Todo al día');
+            setText('stat-delivered-orders', delivered);
+            setText('stat-delivered-hint', delivered + ' entregados');
+
+            var activeBooks = books.filter(function(b) { return b.active; });
+            var lowStock = books.filter(function(b) { return b.stock > 0 && b.stock < 15; });
+            var outStock = books.filter(function(b) { return b.stock <= 0; });
+            setText('stat-customers', customers.length);
+            setText('stat-customers-hint', customers.filter(function(c) { return c.active; }).length + ' cuentas activas');
+            setText('stat-catalog', activeBooks.length);
+            setText('stat-lowstock', lowStock.length);
+            setText('stat-outstock', outStock.length);
+
+            var todayOrders = orders.filter(function(o) { return sameDay(new Date(o.createdAt), ref); });
+            setText('stat-today-sales', formatPrice(sumTotals(todayOrders), config));
+            setText('stat-today-hint', todayOrders.length + ' pedido' + (todayOrders.length === 1 ? '' : 's') + ' hoy');
+
+            var wLabels = [], wData = [];
+            for (var i = 6; i >= 0; i--) {
+                var d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - i);
+                var dayTotal = orders.filter(function(o) { return sameDay(new Date(o.createdAt), d); })
+                    .reduce(function(s, o) { return s + o.total; }, 0);
+                wLabels.push(d.toLocaleDateString('es-HN', { weekday: 'short', day: 'numeric' }).replace('.', ''));
+                wData.push(dayTotal);
+            }
+            renderBarChart('sales-chart', wData, wLabels);
+
+            var catTotals = {};
+            orders.forEach(function(o) {
+                o.items.forEach(function(it) {
+                    var b = books.find(function(x) { return x.id === it.bookId; });
+                    if (!b) return;
+                    var cat = DB.getCategory(b.categoryId);
+                    var key = cat ? cat.name : 'Sin categoría';
+                    catTotals[key] = (catTotals[key] || 0) + (it.quantity * it.price);
+                });
+            });
+            var catEntries = Object.entries(catTotals).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 8);
+            renderBarChart('category-chart',
+                catEntries.map(function(e) { return e[1]; }),
+                catEntries.map(function(e) { return e[0].length > 10 ? e[0].slice(0, 10) + '…' : e[0]; }));
+
+            var recent = DB.getOrders().slice().sort(function(a, b) {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }).slice(0, 5);
+            var recentTbody = document.getElementById('recent-orders');
+            if (recent.length === 0) {
+                recentTbody.innerHTML = emptyRow(5, '📦', 'Sin pedidos', 'Los pedidos aparecerán aquí cuando los clientes compren.');
+            } else {
+                recentTbody.innerHTML = recent.map(function(o) {
+                    var cust = DB.getCustomer(o.customerId);
+                    var pm = DB.getPaymentMethods().find(function(m) { return m.id === o.paymentMethod; });
+                    return '<tr>' +
+                        '<td><span class="font-semibold">' + o.id.toUpperCase() + '</span>' +
+                        '<div class="text-xs text-muted">' + (pm ? pm.name : '') + '</div></td>' +
+                        '<td>' + (cust ? cust.name : 'Cliente invitado') + '</td>' +
+                        '<td>' + formatDate(o.createdAt) + '</td>' +
+                        '<td class="font-semibold">' + formatPrice(o.total, config) + '</td>' +
+                        '<td><span class="badge ' + getStatusBadgeClass(o.status) + '">' + getStatusLabel(o.status) + '</span></td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            var notes = DB.getNotifications().slice().sort(function(a, b) {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }).slice(0, 8);
+            var icons = {
+                new_order: ['🛒', 'blue'],
+                low_stock: ['⚠️', 'yellow'],
+                out_of_stock: ['🚫', 'gray'],
+                new_customer: ['👤', 'green'],
+                contact: ['✉️', 'purple']
+            };
+            var actList = document.getElementById('activity-list');
+            if (notes.length === 0) {
+                actList.innerHTML = '<li class="activity-item"><div class="activity-msg text-muted">Sin actividad reciente.</div></li>';
+            } else {
+                actList.innerHTML = notes.map(function(n) {
+                    var icon = icons[n.type] || ['📌', 'gray'];
+                    return '<li class="activity-item">' +
+                        '<div class="activity-icon ' + icon[1] + '">' + icon[0] + '</div>' +
+                        '<div><div class="activity-msg">' + n.message + '</div>' +
+                        '<div class="activity-time">' + timeAgo(n.createdAt, ref) + '</div></div></li>';
+                }).join('');
+            }
+
+            var lowRows = books.filter(function(b) { return b.stock < 15; })
+                .sort(function(a, b) { return a.stock - b.stock; });
+            setText('low-stock-count', lowRows.length + ' libro' + (lowRows.length === 1 ? '' : 's'));
+            var lowTbody = document.getElementById('low-stock-tbody');
+            if (lowRows.length === 0) {
+                lowTbody.innerHTML = emptyRow(4, '📚', 'Todo en orden', 'No hay libros con stock bajo.');
+            } else {
+                lowTbody.innerHTML = lowRows.map(function(b) {
+                    var badge = b.stock <= 0 ? 'badge-gray' : 'badge-warning';
+                    var label = b.stock <= 0 ? 'Agotado' : 'Stock bajo';
+                    return '<tr>' +
+                        '<td><div style="display:flex;align-items:center;gap:12px;">' + coverHTML(b) +
+                        '<span class="font-semibold">' + b.title + '</span></div></td>' +
+                        '<td class="text-muted">' + (b.sku || '—') + '</td>' +
+                        '<td><span class="badge ' + badge + '">' + b.stock + '</span></td>' +
+                        '<td><span class="badge ' + badge + '">' + label + '</span></td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            var qtyMap = {};
+            orders.forEach(function(o) {
+                o.items.forEach(function(it) {
+                    qtyMap[it.bookId] = (qtyMap[it.bookId] || 0) + it.quantity;
+                });
+            });
+            var best = books.filter(function(b) { return qtyMap[b.id]; })
+                .sort(function(a, b) { return qtyMap[b.id] - qtyMap[a.id]; }).slice(0, 5);
+            var bestList = document.getElementById('bestsellers-list');
+            if (best.length === 0) {
+                bestList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏆</div><div class="empty-state-title">Sin ventas aún</div><div class="empty-state-text">Los libros más vendidos aparecerán aquí.</div></div>';
+            } else {
+                bestList.innerHTML = best.map(function(b, i) {
+                    var au = DB.getAuthor(b.authorId);
+                    var qty = qtyMap[b.id];
+                    return '<div class="activity-item" style="align-items:center;">' +
+                        '<div class="rank-chip">' + (i + 1) + '</div>' +
+                        coverHTML(b) +
+                        '<div style="flex:1;min-width:0;"><div class="activity-msg truncate">' + b.title + '</div>' +
+                        '<div class="activity-time">' + (au ? au.name : '') + '</div></div>' +
+                        '<div style="text-align:right;">' +
+                        '<div class="font-semibold text-xs">' + qty + ' vendido' + (qty === 1 ? '' : 's') + '</div>' +
+                        '<div class="text-xs text-muted">' + formatPrice(qty * effectivePrice(b), config) + '</div></div>' +
+                        '</div>';
+                }).join('');
+            }
+        }
+
+        initAdminPage('Dashboard');
+        if (AdminAuth.isLoggedIn()) {
+            renderDashboard();
+        }
+    </script>
+</body>
+</html>

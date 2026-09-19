@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías y Géneros</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .admin-toolbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        margin-bottom: 16px;
+                    }
+                    .admin-tools {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        flex: 1;
+                    }
+                    .tool-input { min-width: 220px; flex: 1; }
+                    .drop-zone {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    .drop-preview {
+                        width: 64px;
+                        height: 64px;
+                        border-radius: var(--radius-md);
+                        background: var(--gray-100);
+                        border: 1px dashed var(--gray-300);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5rem;
+                        color: var(--gray-400);
+                        overflow: hidden;
+                        flex-shrink: 0;
+                    }
+                    .drop-preview img { width: 100%; height: 100%; object-fit: cover; }
+                    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+                    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+                    .form-grid .form-group { margin-bottom: 14px; }
+                    .switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 40px;
+                        height: 22px;
+                        vertical-align: middle;
+                    }
+                    .switch input { opacity: 0; width: 0; height: 0; }
+                    .switch-slider {
+                        position: absolute;
+                        inset: 0;
+                        background: var(--gray-300);
+                        border-radius: 22px;
+                        transition: .2s;
+                        cursor: pointer;
+                    }
+                    .switch-slider:before {
+                        content: '';
+                        position: absolute;
+                        width: 16px;
+                        height: 16px;
+                        left: 3px;
+                        top: 3px;
+                        background: var(--white);
+                        border-radius: 50%;
+                        transition: .2s;
+                        box-shadow: var(--shadow);
+                    }
+                    .switch input:checked + .switch-slider { background: var(--success); }
+                    .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+                    .cat-icon {
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 8px;
+                        background: var(--primary-bg);
+                        color: var(--primary);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1rem;
+                        flex-shrink: 0;
+                    }
+                    .cat-name { font-weight: 600; color: var(--gray-900); }
+                    .cat-slug { font-size: 0.72rem; color: var(--gray-400); font-family: monospace; }
+                    .order-btn {
+                        width: 26px;
+                        height: 26px;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.8rem;
+                        color: var(--gray-500);
+                        border: 1px solid var(--gray-200);
+                        background: var(--white);
+                        transition: var(--transition);
+                        cursor: pointer;
+                    }
+                    .order-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+                    .order-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+                    .sub-row-indent { padding-left: 28px; }
+                    .sub-label {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 4px;
+                        font-size: 0.72rem;
+                        color: var(--gray-500);
+                        margin-left: 8px;
+                    }
+                    .sub-label .sub-chip {
+                        background: var(--gray-100);
+                        border-radius: 4px;
+                        padding: 1px 6px;
+                        color: var(--gray-600);
+                        font-weight: 500;
+                    }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Categorías y Géneros</h1>
+                        <p class="text-muted text-sm mb-0" id="cat-counts">Cargando...</p>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-primary" id="new-cat-btn" onclick="openCategoryModal()">＋ Nueva Categoría</button>
+                        <button type="button" class="btn btn-primary" id="new-genre-btn" style="display:none;" onclick="openGenreModal()">＋ Nuevo Género</button>
+                    </div>
+                </div>
+
+                <div class="tabs" role="tablist">
+                    <button type="button" class="tab-btn active" id="tab-btn-categories" data-tab="categories" onclick="switchTab('categories')">Categorías</button>
+                    <button type="button" class="tab-btn" id="tab-btn-genres" data-tab="genres" onclick="switchTab('genres')">Géneros</button>
+                </div>
+
+                <!-- CATEGORIES TAB -->
+                <div class="tab-content" id="tab-categories">
+                    <div class="admin-toolbar">
+                        <div class="admin-tools">
+                            <input type="text" class="form-control tool-input" id="category-search" placeholder="Buscar categoría o subcategoría...">
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Slug</th>
+                                    <th>Activo</th>
+                                    <th>Orden</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categories-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- GENRES TAB -->
+                <div class="tab-content" id="tab-genres" style="display:none;">
+                    <div class="admin-toolbar">
+                        <div class="admin-tools">
+                            <input type="text" class="form-control tool-input" id="genre-search" placeholder="Buscar género...">
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Activo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="genres-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CATEGORY FORM MODAL -->
+                <div class="modal-overlay" id="category-modal" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="category-modal-title">Nueva Categoría</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('category-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="category-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="category-image-file">Imagen de la categoría</label>
+                                    <div class="drop-zone">
+                                        <div class="drop-preview" id="category-image-preview"><span>🏷</span></div>
+                                        <div style="flex:1;">
+                                            <input type="file" class="form-control" id="category-image-file" accept="image/*">
+                                            <div class="form-hint">Selecciona una imagen desde tu dispositivo (JPG o PNG).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="category-name">Nombre *</label>
+                                        <input type="text" class="form-control" id="category-name" placeholder="Ej: Novela Histórica" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="category-parent">Categoría padre (subcategoría)</label>
+                                        <select class="form-control" id="category-parent">
+                                            <option value="">— Ninguna (nivel principal) —</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="category-slug">Slug</label>
+                                        <input type="text" class="form-control" id="category-slug" placeholder="novela-historica">
+                                        <div class="form-hint">Se genera automáticamente a partir del nombre. Puedes editarlo.</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="category-order">Orden</label>
+                                        <input type="number" class="form-control" id="category-order" placeholder="0" min="0" step="1">
+                                        <div class="form-hint">Los valores más bajos se muestran primero.</div>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom:16px;">
+                                    <label class="form-check" style="justify-content:flex-start;">
+                                        <input type="checkbox" id="category-active" checked>
+                                        <span>Activo</span>
+                                    </label>
+                                </div>
+                                <div class="modal-footer" style="padding:0;">
+                                    <button type="button" class="btn btn-ghost" onclick="Modal.hide('category-modal')">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary" id="category-save-btn">Guardar Categoría</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GENRE FORM MODAL -->
+                <div class="modal-overlay" id="genre-modal" role="dialog" aria-modal="true" aria-labelledby="genre-modal-title">
+                    <div class="modal" style="max-width:480px;">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="genre-modal-title">Nuevo Género</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('genre-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="genre-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="genre-name">Nombre *</label>
+                                    <input type="text" class="form-control" id="genre-name" placeholder="Ej: Novela Negra" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom:16px;">
+                                    <label class="form-check" style="justify-content:flex-start;">
+                                        <input type="checkbox" id="genre-active" checked>
+                                        <span>Activo</span>
+                                    </label>
+                                </div>
+                                <div class="modal-footer" style="padding:0;">
+                                    <button type="button" class="btn btn-ghost" onclick="Modal.hide('genre-modal')">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary" id="genre-save-btn">Guardar Género</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var editingCategoryId = null;
+        var editingGenreId = null;
+        var pendingCategoryImage = '';
+        var slugTouched = false;
+        var currentTab = 'categories';
+
+        function esc(s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function slugify(str) {
+            return String(str || '').toLowerCase().trim()
+                .replace(/[áàäâã]/g, 'a').replace(/[éèëê]/g, 'e')
+                .replace(/[íìïî]/g, 'i').replace(/[óòöôõ]/g, 'o')
+                .replace(/[úùüû]/g, 'u').replace(/ñ/g, 'n')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim().replace(/[\s-]+/g, '-');
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-btn-categories').classList.toggle('active', tab === 'categories');
+            document.getElementById('tab-btn-genres').classList.toggle('active', tab === 'genres');
+            document.getElementById('tab-categories').style.display = tab === 'categories' ? '' : 'none';
+            document.getElementById('tab-genres').style.display = tab === 'genres' ? '' : 'none';
+            document.getElementById('new-cat-btn').style.display = tab === 'categories' ? '' : 'none';
+            document.getElementById('new-genre-btn').style.display = tab === 'genres' ? '' : 'none';
+        }
+
+        // ============================================
+        // CATEGORIES
+        // ============================================
+
+        function compareByOrder(a, b) {
+            return (a.order || 0) - (b.order || 0) || String(a.name || '').localeCompare(String(b.name || ''));
+        }
+
+        function renderCategories() {
+            var categories = DB.getCategories();
+            var books = DB.getBooks();
+            var q = getVal('category-search').toLowerCase();
+
+            var list = categories.filter(function(c) {
+                if (!q) return true;
+                var parent = DB.getCategory(c.parentId);
+                return c.name.toLowerCase().indexOf(q) !== -1 ||
+                    c.slug.toLowerCase().indexOf(q) !== -1 ||
+                    (parent && parent.name.toLowerCase().indexOf(q) !== -1);
+            });
+
+            var roots = list.filter(function(c) {
+                return !c.parentId || !DB.getCategory(c.parentId);
+            }).sort(compareByOrder);
+
+            setText('cat-counts',
+                categories.length + ' categoría' + (categories.length === 1 ? '' : 's') +
+                ' · ' + DB.getGenres().length + ' género' + (DB.getGenres().length === 1 ? '' : 's') +
+                ' en el catálogo');
+
+            var tbody = document.getElementById('categories-tbody');
+            if (roots.length === 0) {
+                tbody.innerHTML = emptyRow(5, '🏷', 'Sin categorías', 'No se encontraron categorías con los filtros actuales.');
+                return;
+            }
+
+            var rows = [];
+            var rendered = {};
+            roots.forEach(function(root) {
+                var bks = books.filter(function(b) { return b.categoryId === root.id; }).length;
+                rows.push(categoryRow(root, bks, false));
+                rendered[root.id] = true;
+
+                var children = list.filter(function(c) { return c.parentId === root.id; }).sort(compareByOrder);
+                children.forEach(function(child) {
+                    var cb = books.filter(function(b) { return b.categoryId === child.id; }).length;
+                    rows.push(categoryRow(child, cb, true));
+                    rendered[child.id] = true;
+                });
+            });
+
+            list.forEach(function(c) {
+                if (!rendered[c.id]) {
+                    var cb = books.filter(function(b) { return b.categoryId === c.id; }).length;
+                    rows.push(categoryRow(c, cb, false));
+                }
+            });
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        function categoryImageIcon(c) {
+            return c.image ? '<img src="' + c.image + '" alt="" style="width:100%;height:100%;object-fit:cover;">' : '<span>🏷</span>';
+        }
+
+        function categoryRow(c, bookCount, isChild) {
+            var orderBtns =
+                '<button type="button" class="order-btn" onclick="moveCategory(\'' + c.id + '\', -1)" title="Subir">▲</button>' +
+                '<button type="button" class="order-btn" onclick="moveCategory(\'' + c.id + '\', 1)" title="Bajar">▼</button>';
+
+            var nameCell = '<td>' +
+                '<div class="flex" style="align-items:center;gap:10px;">' +
+                '<div class="cat-icon">' + categoryImageIcon(c) + '</div>' +
+                '<div style="min-width:0;">' +
+                '<div class="cat-name">' + esc(c.name) + '</div>' +
+                '<div class="text-xs text-muted">' + bookCount + ' libro' + (bookCount === 1 ? '' : 's') + '</div>' +
+                '</div>' +
+                (c.parentId ? '<span class="sub-label">─ <span class="sub-chip">' + esc(DB.getCategory(c.parentId) ? DB.getCategory(c.parentId).name : '') + '</span></span>' : '') +
+                '</div></td>';
+
+            if (isChild) {
+                nameCell = '<td class="sub-row-indent">' +
+                    '<div class="flex" style="align-items:center;gap:10px;">' +
+                    '<span class="text-muted">└</span>' +
+                    '<div class="cat-icon">' + categoryImageIcon(c) + '</div>' +
+                    '<div style="min-width:0;">' +
+                    '<div class="cat-name">' + esc(c.name) + '</div>' +
+                    '<div class="text-xs text-muted">' + bookCount + ' libro' + (bookCount === 1 ? '' : 's') + '</div>' +
+                    '</div>' +
+                    '<span class="sub-label"><span class="sub-chip">Sub de ' + esc(DB.getCategory(c.parentId) ? DB.getCategory(c.parentId).name : '') + '</span></span>' +
+                    '</div></td>';
+            }
+
+            return '<tr>' +
+                nameCell +
+                '<td><div class="cat-slug">' + esc(c.slug) + '</div></td>' +
+                '<td>' +
+                '<label class="switch" title="' + (c.active ? 'Desactivar categoría' : 'Activar categoría') + '">' +
+                '<input type="checkbox" ' + (c.active ? 'checked' : '') + ' onchange="toggleCategoryActive(\'' + c.id + '\', this)">' +
+                '<span class="switch-slider"></span></label>' +
+                '</td>' +
+                '<td><span class="badge badge-gray">' + (c.order || 0) + '</span></td>' +
+                '<td><div class="table-actions">' +
+                '<div class="flex" style="gap:4px;">' + orderBtns + '</div>' +
+                '<button type="button" class="btn btn-icon btn-sm" onclick="openCategoryModal(\'' + c.id + '\')" title="Editar">✎</button>' +
+                '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteCategory(\'' + c.id + '\')" title="Eliminar">🗑</button>' +
+                '</div></td>' +
+                '</tr>';
+        }
+
+        function populateCategoryParents(excludeId) {
+            var selected = editingCategoryId ? DB.getCategory(editingCategoryId).parentId : '';
+            var el = document.getElementById('category-parent');
+            var category = excludeId ? DB.getCategory(excludeId) : null;
+
+            var opts = DB.getCategories().filter(function(c) {
+                if (category && (c.id === category.id)) return false;
+                if (category && c.parentId === category.id) return false;
+                return !c.parentId;
+            }).sort(compareByOrder);
+
+            el.innerHTML = '<option value="">— Ninguna (nivel principal) —</option>' +
+                opts.map(function(c) {
+                    return '<option value="' + c.id + '"' + (c.id === selected ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+                }).join('');
+        }
+
+        function openCategoryModal(id) {
+            editingCategoryId = id || null;
+            pendingCategoryImage = '';
+            slugTouched = false;
+            document.getElementById('category-form').reset();
+            document.getElementById('category-image-preview').innerHTML = '<span>🏷</span>';
+            document.getElementById('category-modal-title').textContent = 'Nueva Categoría';
+            document.getElementById('category-save-btn').textContent = 'Guardar Categoría';
+
+            populateCategoryParents(id);
+
+            if (id) {
+                var c = DB.getCategory(id);
+                if (!c) return;
+                document.getElementById('category-modal-title').textContent = 'Editar Categoría';
+                document.getElementById('category-save-btn').textContent = 'Actualizar Categoría';
+                setVal('category-name', c.name);
+                if (c.parentId) setVal('category-parent', c.parentId);
+                setVal('category-slug', c.slug);
+                setVal('category-order', c.order);
+                document.getElementById('category-active').checked = !!c.active;
+                if (c.image) {
+                    document.getElementById('category-image-preview').innerHTML = '<img src="' + c.image + '" alt="Imagen">';
+                }
+            } else {
+                document.getElementById('category-active').checked = true;
+            }
+            Modal.show('category-modal');
+            setTimeout(function() { document.getElementById('category-name').focus(); }, 100);
+        }
+
+        function handleCategoryImageUpload(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Toast.show('Selecciona una imagen válida', 'error');
+                e.target.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                pendingCategoryImage = ev.target.result;
+                document.getElementById('category-image-preview').innerHTML = '<img src="' + pendingCategoryImage + '" alt="Imagen">';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveCategory(e) {
+            e.preventDefault();
+            var name = getVal('category-name');
+            if (!name) {
+                Toast.show('El nombre de la categoría es obligatorio', 'error');
+                return;
+            }
+            var data = {
+                name: name,
+                slug: getVal('category-slug') || slugify(name),
+                parentId: getVal('category-parent') || '',
+                order: parseInt(getVal('category-order'), 10) || 0,
+                active: document.getElementById('category-active').checked
+            };
+            if (data.parentId === editingCategoryId) data.parentId = '';
+
+            var categories = DB.getCategories();
+            if (editingCategoryId) {
+                var idx = categories.findIndex(function(x) { return x.id === editingCategoryId; });
+                if (idx === -1) return;
+                var prev = categories[idx];
+                data.image = pendingCategoryImage || prev.image || '';
+                categories[idx] = Object.assign({}, prev, data);
+                Toast.show('Categoría actualizada', 'success');
+            } else {
+                data.id = DB.generateId('cat');
+                data.image = pendingCategoryImage || '';
+                if (!data.order) {
+                    var groupMax = 0;
+                    categories.forEach(function(c) {
+                        if ((c.parentId || '') === data.parentId) groupMax = Math.max(groupMax, c.order || 0);
+                    });
+                    data.order = groupMax + 1;
+                }
+                categories.push(data);
+                Toast.show('Categoría creada correctamente', 'success');
+            }
+            DB.setCategories(categories);
+            pendingCategoryImage = '';
+            Modal.hide('category-modal');
+            if (currentTab !== 'categories') switchTab('categories');
+            renderCategories();
+        }
+
+        function toggleCategoryActive(id, el) {
+            var categories = DB.getCategories();
+            var c = categories.find(function(x) { return x.id === id; });
+            if (!c) return;
+            c.active = el.checked;
+            DB.setCategories(categories);
+            Toast.show(c.active ? 'Categoría activada' : 'Categoría desactivada', c.active ? 'success' : 'warning');
+            renderCategories();
+        }
+
+        function deleteCategory(id) {
+            var c = DB.getCategory(id);
+            if (!c) return;
+            var children = DB.getCategories().filter(function(x) { return x.parentId === id; });
+            var extra = children.length > 0
+                ? ' También se eliminarán ' + children.length + ' subcategoría' + (children.length === 1 ? '' : 's') + ' y se desvincularán sus libros.'
+                : ' Los libros asociados dejarán de pertenecer a esta categoría.';
+            Modal.confirm('¿Eliminar la categoría "' + c.name + '"? ' + extra, function() {
+                DB.setCategories(DB.getCategories().filter(function(x) { return x.id !== id && x.parentId !== id; }));
+                var books = DB.getBooks();
+                var changed = false;
+                books.forEach(function(b) {
+                    var linked = false;
+                    if (b.categoryId === id) { b.categoryId = ''; linked = true; }
+                    children.forEach(function(ch) {
+                        if (b.categoryId === ch.id) { b.categoryId = ''; linked = true; }
+                    });
+                    if (linked) changed = true;
+                });
+                if (changed) DB.setBooks(books);
+                Toast.show('Categoría eliminada', 'success');
+                if (editingCategoryId === id) Modal.hide('category-modal');
+                renderCategories();
+            });
+        }
+
+        function moveCategory(id, dir) {
+            var categories = DB.getCategories();
+            var item = categories.find(function(x) { return x.id === id; });
+            if (!item) return;
+            var group = categories.filter(function(c) {
+                return (c.parentId || '') === (item.parentId || '');
+            }).sort(compareByOrder);
+            var idx = group.indexOf(item);
+            var target = group[idx + dir];
+            if (!target) return;
+            var tmp = item.order;
+            item.order = target.order;
+            target.order = tmp;
+            DB.setCategories(categories);
+            renderCategories();
+        }
+
+        // ============================================
+        // GENRES
+        // ============================================
+
+        function renderGenres() {
+            var genres = DB.getGenres();
+            var books = DB.getBooks();
+            var q = getVal('genre-search').toLowerCase();
+
+            var list = genres.filter(function(g) {
+                if (!q) return true;
+                return g.name.toLowerCase().indexOf(q) !== -1;
+            });
+            list = list.slice().sort(function(a, b) {
+                return String(a.name).localeCompare(String(b.name));
+            });
+
+            setText('cat-counts',
+                DB.getCategories().length + ' categoría' + (DB.getCategories().length === 1 ? '' : 's') +
+                ' · ' + genres.length + ' género' + (genres.length === 1 ? '' : 's') +
+                ' en el catálogo');
+
+            var tbody = document.getElementById('genres-tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = emptyRow(3, '🎭', 'Sin géneros', 'No se encontraron géneros con los filtros actuales.');
+                return;
+            }
+
+            tbody.innerHTML = list.map(function(g) {
+                var count = books.filter(function(b) { return b.genreId === g.id; }).length;
+                return '<tr>' +
+                    '<td><div class="flex" style="align-items:center;gap:10px;">' +
+                    '<div class="cat-icon">🎭</div>' +
+                    '<div><div class="cat-name">' + esc(g.name) + '</div>' +
+                    '<div class="text-xs text-muted">' + count + ' libro' + (count === 1 ? '' : 's') + '</div></div></div></td>' +
+                    '<td>' +
+                    '<label class="switch" title="' + (g.active ? 'Desactivar género' : 'Activar género') + '">' +
+                    '<input type="checkbox" ' + (g.active ? 'checked' : '') + ' onchange="toggleGenreActive(\'' + g.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '</td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openGenreModal(\'' + g.id + '\')" title="Editar">✎</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteGenre(\'' + g.id + '\')" title="Eliminar">🗑</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function openGenreModal(id) {
+            editingGenreId = id || null;
+            document.getElementById('genre-form').reset();
+            document.getElementById('genre-modal-title').textContent = 'Nuevo Género';
+            document.getElementById('genre-save-btn').textContent = 'Guardar Género';
+            if (id) {
+                var g = DB.getGenre(id);
+                if (!g) return;
+                document.getElementById('genre-modal-title').textContent = 'Editar Género';
+                document.getElementById('genre-save-btn').textContent = 'Actualizar Género';
+                setVal('genre-name', g.name);
+                document.getElementById('genre-active').checked = !!g.active;
+            } else {
+                document.getElementById('genre-active').checked = true;
+            }
+            Modal.show('genre-modal');
+            setTimeout(function() { document.getElementById('genre-name').focus(); }, 100);
+        }
+
+        function saveGenre(e) {
+            e.preventDefault();
+            var name = getVal('genre-name');
+            if (!name) {
+                Toast.show('El nombre del género es obligatorio', 'error');
+                return;
+            }
+            var data = {
+                name: name,
+                active: document.getElementById('genre-active').checked
+            };
+
+            var genres = DB.getGenres();
+            if (editingGenreId) {
+                var idx = genres.findIndex(function(x) { return x.id === editingGenreId; });
+                if (idx === -1) return;
+                genres[idx] = Object.assign({}, genres[idx], data);
+                Toast.show('Género actualizado', 'success');
+            } else {
+                data.id = DB.generateId('gen');
+                genres.push(data);
+                Toast.show('Género creado correctamente', 'success');
+            }
+            DB.setGenres(genres);
+            Modal.hide('genre-modal');
+            if (currentTab !== 'genres') switchTab('genres');
+            renderGenres();
+        }
+
+        function toggleGenreActive(id, el) {
+            var genres = DB.getGenres();
+            var g = genres.find(function(x) { return x.id === id; });
+            if (!g) return;
+            g.active = el.checked;
+            DB.setGenres(genres);
+            Toast.show(g.active ? 'Género activado' : 'Género desactivado', g.active ? 'success' : 'warning');
+            renderGenres();
+        }
+
+        function deleteGenre(id) {
+            var g = DB.getGenre(id);
+            if (!g) return;
+            var count = DB.getBooks().filter(function(b) { return b.genreId === id; }).length;
+            Modal.confirm('¿Eliminar el género "' + g.name + '"? ' + (count > 0 ? 'Se desvincularán ' + count + ' libro' + (count === 1 ? '' : 's') + '.' : ''), function() {
+                DB.setGenres(DB.getGenres().filter(function(x) { return x.id !== id; }));
+                var books = DB.getBooks();
+                var changed = false;
+                books.forEach(function(b) {
+                    if (b.genreId === id) { b.genreId = ''; changed = true; }
+                });
+                if (changed) DB.setBooks(books);
+                Toast.show('Género eliminado', 'success');
+                if (editingGenreId === id) Modal.hide('genre-modal');
+                renderGenres();
+            });
+        }
+
+        initAdminPage('Categorías y Géneros');
+        if (AdminAuth.isLoggedIn()) {
+            renderCategories();
+            renderGenres();
+            document.getElementById('category-name').addEventListener('input', function() {
+                if (!slugTouched) {
+                    document.getElementById('category-slug').value = slugify(this.value);
+                }
+            });
+            document.getElementById('category-slug').addEventListener('input', function() {
+                slugTouched = true;
+            });
+            document.getElementById('category-search').addEventListener('input', renderCategories);
+            document.getElementById('genre-search').addEventListener('input', renderGenres);
+            document.getElementById('category-form').addEventListener('submit', saveCategory);
+            document.getElementById('genre-form').addEventListener('submit', saveGenre);
+            document.getElementById('category-image-file').addEventListener('change', handleCategoryImageUpload);
+        }
+    </script>
+</body>
+</html>

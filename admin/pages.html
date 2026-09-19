@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Páginas Informativas | Admin</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .pages-layout{display:flex;gap:24px}
+    .pages-list-panel{width:260px;flex-shrink:0}
+    .pages-editor-panel{flex:1;min-width:0}
+    .pages-list{background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden}
+    .pages-list-item{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .2s;font-size:.9rem;font-weight:500;color:#374151}
+    .pages-list-item:last-child{border-bottom:none}
+    .pages-list-item:hover{background:#f0f4ff}
+    .pages-list-item.active{background:#eff6ff;color:#2563eb;border-left:3px solid #2563eb}
+    .pages-list-item .page-icon{font-size:1.1rem;width:24px;text-align:center}
+
+    .editor-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:24px}
+    .editor-card h3{font-size:1.1rem;font-weight:600;color:#1a1a2e;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-group input,.form-group textarea{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif;transition:border-color .2s}
+    .form-group input:focus,.form-group textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .form-group textarea{min-height:320px;resize:vertical;font-family:monospace;font-size:.85rem;line-height:1.6}
+    .editor-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:16px}
+    .save-btn{background:#2563eb;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s}
+    .save-btn:hover{background:#1d4ed8}
+    .preview-btn{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s}
+    .preview-btn:hover{background:#e5e7eb}
+
+    @media(max-width:768px){
+      .pages-layout{flex-direction:column}
+      .pages-list-panel{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+    <aside class="admin-sidebar" id="admin-sidebar"></aside>
+    <main class="admin-main">
+      <header class="admin-topbar" id="admin-topbar"></header>
+      <div class="admin-content">
+
+        <div class="pages-layout">
+          <div class="pages-list-panel">
+            <div class="pages-list" id="pages-list"></div>
+          </div>
+          <div class="pages-editor-panel">
+            <div class="editor-card" id="editor-card">
+              <h3 id="editor-title">Selecciona una página</h3>
+              <div id="editor-content">
+                <p style="color:#9ca3af;text-align:center;padding:40px 0">Elige una página del menú lateral para editarla.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    initAdminPage('Páginas');
+
+    var pageKeys = [
+      { key: 'about', label: 'Sobre Nosotros', icon: '&#128214;' },
+      { key: 'faq', label: 'Preguntas Frecuentes', icon: '&#10067;' },
+      { key: 'privacy', label: 'Política de Privacidad', icon: '&#128274;' },
+      { key: 'terms', label: 'Términos y Condiciones', icon: '&#128221;' },
+      { key: 'shipping', label: 'Envíos', icon: '&#128666;' },
+      { key: 'returns', label: 'Devoluciones', icon: '&#128260;' }
+    ];
+
+    var pages = DB.getPages() || {};
+    var activePage = null;
+
+    function renderPageList() {
+      var list = document.getElementById('pages-list');
+      list.innerHTML = '';
+      pageKeys.forEach(function (p) {
+        var div = document.createElement('div');
+        div.className = 'pages-list-item' + (activePage === p.key ? ' active' : '');
+        div.innerHTML = '<span class="page-icon">' + p.icon + '</span><span>' + p.label + '</span>';
+        div.addEventListener('click', function () {
+          activePage = p.key;
+          renderPageList();
+          renderEditor(p);
+        });
+        list.appendChild(div);
+      });
+    }
+
+    function renderEditor(pageDef) {
+      document.getElementById('editor-title').textContent = pageDef.label;
+      var pageData = pages[pageDef.key] || { title: pageDef.label, content: '' };
+
+      document.getElementById('editor-content').innerHTML =
+        '<div class="form-group">' +
+          '<label>Título de la Página</label>' +
+          '<input type="text" id="page-title-input" value="' + escapeAttr(pageData.title) + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Contenido (HTML)</label>' +
+          '<textarea id="page-content-input" placeholder="Escribe el contenido en HTML...">' + escapeHtml(pageData.content || '') + '</textarea>' +
+        '</div>' +
+        '<div class="editor-actions">' +
+          '<button type="button" class="preview-btn" id="preview-page-btn">Vista Previa</button>' +
+          '<button type="button" class="save-btn" id="save-page-btn">Guardar Página</button>' +
+        '</div>';
+
+      document.getElementById('save-page-btn').addEventListener('click', function () {
+        pages[pageDef.key] = {
+          title: document.getElementById('page-title-input').value,
+          content: document.getElementById('page-content-input').value
+        };
+        DB.setPages(pages);
+        showToast(pageDef.label + ' guardada correctamente');
+      });
+
+      document.getElementById('preview-page-btn').addEventListener('click', function () {
+        var previewWin = window.open('', '_blank', 'width=800,height=600');
+        var title = document.getElementById('page-title-input').value;
+        var content = document.getElementById('page-content-input').value;
+        previewWin.document.write(
+          '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(title) + '</title>' +
+          '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+          '<style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a2e;line-height:1.8}' +
+          'h1{font-size:1.8rem;margin-bottom:20px}img{max-width:100%}</style></head>' +
+          '<body><h1>' + escapeHtml(title) + '</h1>' + content + '</body></html>'
+        );
+        previewWin.document.close();
+      });
+    }
+
+    function escapeAttr(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    renderPageList();
+  </script>
+</body>
+</html>

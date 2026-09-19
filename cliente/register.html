@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card card">
+            <div class="auth-card-body">
+                <div class="auth-logo" id="auth-logo"></div>
+                <h2 class="auth-title">Crear Cuenta</h2>
+                <p class="auth-subtitle">Registrate para empezar a comprar</p>
+
+                <form id="register-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="reg-name">Nombre Completo</label>
+                        <div class="input-icon">
+                            <i class="lucide-user"></i>
+                            <input type="text" id="reg-name" class="form-control" placeholder="Tu nombre completo" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <div class="input-icon">
+                            <i class="lucide-mail"></i>
+                            <input type="email" id="reg-email" class="form-control" placeholder="tu@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-phone">Telefono</label>
+                        <div class="input-icon">
+                            <i class="lucide-phone"></i>
+                            <input type="tel" id="reg-phone" class="form-control" placeholder="Tu telefono">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Contrasena</label>
+                        <div class="input-icon">
+                            <i class="lucide-lock"></i>
+                            <input type="password" id="reg-password" class="form-control" placeholder="Minimo 6 caracteres" required minlength="6">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-confirm">Confirmar Contrasena</label>
+                        <div class="input-icon">
+                            <i class="lucide-lock"></i>
+                            <input type="password" id="reg-confirm" class="form-control" placeholder="Repite tu contrasena" required minlength="6">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" id="register-btn">
+                        <i class="lucide-user-plus"></i> Crear Cuenta
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Ya tienes cuenta? <a href="login.html" class="form-link">Inicia sesion aqui</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer id="site-footer" class="site-footer" style="display:none;"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const config = DB.getConfig();
+            const logoEl = document.getElementById('auth-logo');
+
+            if (config.logo) {
+                logoEl.innerHTML = '<img src="' + config.logo + '" alt="' + (config.storeName || 'Libreria') + '" class="auth-logo-img">';
+            } else {
+                logoEl.innerHTML = '<span class="auth-logo-text">' + (config.storeName || 'Libreria') + '</span>';
+            }
+
+            document.getElementById('register-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleRegister();
+            });
+        });
+
+        function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const confirm = document.getElementById('reg-confirm').value;
+            const btn = document.getElementById('register-btn');
+
+            if (!name || !email || !password || !confirm) {
+                Toast.show('Por favor completa todos los campos requeridos.', 'error');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                Toast.show('Ingresa un email válido.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                Toast.show('La contraseña debe tener al menos 6 caracteres.', 'error');
+                return;
+            }
+
+            if (password !== confirm) {
+                Toast.show('Las contraseñas no coinciden.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;"></span> Creando cuenta...';
+
+            const result = Auth.register({
+                name: name,
+                email: email,
+                phone: phone,
+                password: password
+            });
+
+            setTimeout(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="lucide-user-plus"></i> Crear Cuenta';
+
+                if (result.success) {
+                    Toast.show('Cuenta creada con éxito! Bienvenido.', 'success');
+                    window.location.href = 'account.html';
+                } else {
+                    Toast.show(result.message || 'Error al crear la cuenta.', 'error');
+                }
+            }, 800);
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+    </script>
+</body>
+</html>

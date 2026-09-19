@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promociones | Admin</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <style>
+        .stat-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        @media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+        @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-grid .form-group { margin-bottom: 14px; }
+        .multi-select { min-height: 110px; }
+        .code-input-group { display: flex; gap: 8px; }
+        .code-input-group .form-control { flex: 1; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; inset: 0; background: var(--gray-300); border-radius: 22px; transition: .2s; cursor: pointer; }
+        .switch-slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: var(--white); border-radius: 50%; transition: .2s; box-shadow: var(--shadow); }
+        .switch input:checked + .switch-slider { background: var(--success); }
+        .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+        .promo-chip { display: inline-block; font-size: 0.72rem; background: var(--gray-100); color: var(--gray-600); border-radius: var(--radius-full); padding: 2px 8px; margin: 1px; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Promociones</h1>
+                        <p class="text-muted text-sm mb-0">Crea cupones y descuentos para tu catálogo</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openPromoModal()">＋ Nueva Promoción</button>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon green">🎉</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-active">—</div>
+                            <div class="stat-label">Promociones Activas</div>
+                            <div class="stat-change up">Vigentes en el sistema</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blue">🏷️</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-coupons">—</div>
+                            <div class="stat-label">Cupones Creados</div>
+                            <div class="stat-change up">Total de promociones</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon yellow">📈</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-uses">—</div>
+                            <div class="stat-label">Usos Totales</div>
+                            <div class="stat-change up">Cupones aplicados</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Código / Nombre</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Aplica A</th>
+                                <th>Compra Mínima</th>
+                                <th>Vigencia</th>
+                                <th>Usos</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promo-tbody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- PROMOTION FORM MODAL -->
+    <div class="modal-overlay" id="promo-modal" role="dialog" aria-modal="true" aria-labelledby="promo-modal-title">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="promo-modal-title">Nueva Promoción</h3>
+                <button type="button" class="modal-close" onclick="Modal.hide('promo-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="promo-form">
+                    <div class="form-group">
+                        <label class="form-label" for="promo-name">Nombre *</label>
+                        <input type="text" class="form-control" id="promo-name" placeholder="Ej: Descuento de Temporada" required>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="promo-type">Tipo *</label>
+                            <select class="form-control" id="promo-type" onchange="updatePromoValueLabel()">
+                                <option value="percentage">Porcentaje (%)</option>
+                                <option value="fixed">Monto fijo (L.)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-value">Valor *</label>
+                            <input type="number" class="form-control" id="promo-value" min="0" step="0.01" placeholder="15" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-code">Código de Cupón *</label>
+                            <div class="code-input-group">
+                                <input type="text" class="form-control" id="promo-code" placeholder="TEMPORADA15" required>
+                                <button type="button" class="btn btn-outline" onclick="generatePromoCode()" title="Autogenerar código">⚡</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-min">Compra Mínima (L.)</label>
+                            <input type="number" class="form-control" id="promo-min" min="0" step="0.01" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-start">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="promo-start">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-end">Fecha Fin</label>
+                            <input type="date" class="form-control" id="promo-end">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-limit">Límite de Uso</label>
+                            <input type="number" class="form-control" id="promo-limit" min="0" step="1" placeholder="Ej: 100 (vacío = ilimitado)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="promo-applies">Aplica A *</label>
+                            <select class="form-control" id="promo-applies" onchange="togglePromoScope()">
+                                <option value="all">Todos los productos</option>
+                                <option value="products">Productos específicos</option>
+                                <option value="categories">Categorías</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="promo-products-group" style="display:none;">
+                        <label class="form-label" for="promo-products">Selecciona productos</label>
+                        <select class="form-control multi-select" id="promo-products" multiple></select>
+                        <div class="form-hint">Mantén presionada la tecla Ctrl (Cmd en Mac) para seleccionar varios.</div>
+                    </div>
+                    <div class="form-group" id="promo-categories-group" style="display:none;">
+                        <label class="form-label" for="promo-categories">Selecciona categorías</label>
+                        <select class="form-control multi-select" id="promo-categories" multiple></select>
+                        <div class="form-hint">Mantén presionada la tecla Ctrl (Cmd en Mac) para seleccionar varias.</div>
+                    </div>
+                    <div class="flex gap-4 flex-wrap" style="margin-bottom:16px;">
+                        <label class="form-check">
+                            <input type="checkbox" id="promo-active" checked>
+                            <span>Activa</span>
+                        </label>
+                    </div>
+                    <div class="modal-footer" style="padding:0;">
+                        <button type="button" class="btn btn-ghost" onclick="Modal.hide('promo-modal')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="promo-save-btn">Guardar Promoción</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var editingPromoId = null;
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function renderStats() {
+            var promos = DB.getPromotions();
+            var active = promos.filter(function(p) { return p.active; });
+            var uses = promos.reduce(function(s, p) { return s + (p.usedCount || 0); }, 0);
+            setText('stat-active', active.length);
+            setText('stat-coupons', promos.length);
+            setText('stat-uses', uses);
+        }
+
+        function appliesLabel(p) {
+            if (!p.appliesTo || p.appliesTo === 'all') return 'Todos los productos';
+            if (p.appliesTo === 'products' || (p.productIds && p.productIds.length)) {
+                var names = (p.productIds || []).map(function(id) {
+                    var b = DB.getBook(id);
+                    return b ? b.title : id;
+                });
+                if (names.length === 0) return 'Productos específicos';
+                var visible = names.slice(0, 2).map(function(n) { return '<span class="promo-chip">' + n + '</span>'; }).join(' ') +
+                    (names.length > 2 ? '<span class="promo-chip">+' + (names.length - 2) + '</span>' : '');
+                return '<div style="max-width:220px;">' + visible + '</div>';
+            }
+            if (p.appliesTo === 'category' || p.appliesTo === 'categories' || (p.categoryIds && p.categoryIds.length)) {
+                var cats = (p.categoryIds || []).map(function(id) {
+                    var c = DB.getCategory(id);
+                    return c ? c.name : id;
+                });
+                if (cats.length === 0) return 'Categorías';
+                var visibleC = cats.slice(0, 2).map(function(n) { return '<span class="promo-chip">' + n + '</span>'; }).join(' ') +
+                    (cats.length > 2 ? '<span class="promo-chip">+' + (cats.length - 2) + '</span>' : '');
+                return '<div style="max-width:220px;">' + visibleC + '</div>';
+            }
+            return '—';
+        }
+
+        function vigenciaLabel(p) {
+            if (p.startDate && p.endDate) return formatDate(p.startDate) + ' → ' + formatDate(p.endDate);
+            if (p.startDate) return 'Desde ' + formatDate(p.startDate);
+            return 'Sin vigencia';
+        }
+
+        function renderPromotions() {
+            var promos = DB.getPromotions().slice().sort(function(a, b) {
+                return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+            });
+            var tbody = document.getElementById('promo-tbody');
+            if (promos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">' +
+                    '<div class="empty-state-icon">🏷️</div>' +
+                    '<div class="empty-state-title">Sin promociones</div>' +
+                    '<div class="empty-state-text">Crea tu primera promoción para ofrecer descuentos a tus clientes.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = promos.map(function(p) {
+                var isPct = p.type === 'percentage';
+                var valueText = isPct ? p.value + '%' : formatPrice(p.value || 0);
+                var typeBadge = isPct ? 'badge-info' : 'badge-accent';
+                var typeLabel = isPct ? 'Porcentaje' : 'Monto fijo';
+                var used = p.usedCount || 0;
+                var limit = p.usageLimit;
+                var usesBadge = limit && used >= limit ? 'badge-warning' : 'badge-gray';
+                var usesText = limit ? (used + '/' + limit) : (used + '/∞');
+                var span = vigenciaLabel(p);
+                return '<tr>' +
+                    '<td><div class="font-semibold">' + (p.code || '—') + '</div>' +
+                    '<div class="text-xs text-muted">' + p.name + '</div></td>' +
+                    '<td><span class="badge ' + typeBadge + '">' + typeLabel + '</span></td>' +
+                    '<td class="font-semibold">' + valueText + '</td>' +
+                    '<td>' + appliesLabel(p) + '</td>' +
+                    '<td>' + (p.minPurchase ? formatPrice(p.minPurchase) : '—') + '</td>' +
+                    '<td class="text-muted">' + span + '</td>' +
+                    '<td><span class="badge ' + usesBadge + '">' + usesText + '</span></td>' +
+                    '<td>' +
+                    '<span class="badge ' + (p.active ? 'badge-success' : 'badge-gray') + '" style="display:inline-block;margin-bottom:6px;">' + (p.active ? 'Activa' : 'Inactiva') + '</span>' +
+                    '<label class="switch" title="Activar / desactivar">' +
+                    '<input type="checkbox" ' + (p.active ? 'checked' : '') + ' onchange="togglePromoActive(\'' + p.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '</td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openPromoModal(\'' + p.id + '\')" title="Editar">✎</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deletePromo(\'' + p.id + '\')" title="Eliminar">🗑</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+            renderStats();
+        }
+
+        function populateSelects() {
+            var books = DB.getBooks().slice().sort(function(a, b) { return a.title.localeCompare(b.title); });
+            document.getElementById('promo-products').innerHTML =
+                '<option value="">— Selecciona —</option>' +
+                books.map(function(b) { return '<option value="' + b.id + '">' + b.title + ' (' + b.sku + ')</option>'; }).join('');
+
+            var cats = DB.getCategories().slice().sort(function(a, b) { return a.name.localeCompare(b.name); });
+            document.getElementById('promo-categories').innerHTML =
+                '<option value="">— Selecciona —</option>' +
+                cats.map(function(c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('');
+        }
+
+        function updatePromoValueLabel() {
+            var type = document.getElementById('promo-type').value;
+            var label = document.querySelector('label[for="promo-value"]');
+            if (label) label.textContent = type === 'percentage' ? 'Valor (%)' : 'Valor (L.)';
+            var input = document.getElementById('promo-value');
+            if (input) input.setAttribute('placeholder', type === 'percentage' ? '15' : '50.00');
+        }
+
+        function togglePromoScope() {
+            var scope = document.getElementById('promo-applies').value;
+            var pg = document.getElementById('promo-products-group');
+            var cg = document.getElementById('promo-categories-group');
+            if (pg) pg.style.display = scope === 'products' ? '' : 'none';
+            if (cg) cg.style.display = scope === 'categories' ? '' : 'none';
+        }
+
+        function generatePromoCode() {
+            var name = getVal('promo-name');
+            var clean = String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'PROMO';
+            var rand = Math.floor(1000 + Math.random() * 9000);
+            var code = clean + rand;
+            setVal('promo-code', code);
+            Toast.show('Código sugerido: ' + code, 'info');
+        }
+
+        function selectedValues(selectId) {
+            var sel = document.getElementById(selectId);
+            return Array.prototype.map.call(sel.selectedOptions, function(o) { return o.value; }).filter(function(v) { return v; });
+        }
+
+        function openPromoModal(id) {
+            editingPromoId = id || null;
+            document.getElementById('promo-form').reset();
+            document.getElementById('promo-modal-title').textContent = 'Nueva Promoción';
+            document.getElementById('promo-save-btn').textContent = 'Guardar Promoción';
+            document.getElementById('promo-active').checked = true;
+            setVal('promo-type', 'percentage');
+            setVal('promo-applies', 'all');
+            togglePromoScope();
+            updatePromoValueLabel();
+
+            if (id) {
+                var p = DB.getPromotions().find(function(x) { return x.id === id; });
+                if (!p) return;
+                document.getElementById('promo-modal-title').textContent = 'Editar Promoción';
+                document.getElementById('promo-save-btn').textContent = 'Actualizar Promoción';
+                setVal('promo-name', p.name);
+                setVal('promo-type', p.type || 'percentage');
+                setVal('promo-value', p.value);
+                setVal('promo-code', p.code || '');
+                setVal('promo-start', p.startDate || '');
+                setVal('promo-end', p.endDate || '');
+                setVal('promo-min', p.minPurchase || '');
+                setVal('promo-limit', p.usageLimit || '');
+                setVal('promo-applies', (p.appliesTo === 'category') ? 'categories' : (p.appliesTo || 'all'));
+                document.getElementById('promo-active').checked = !!p.active;
+                togglePromoScope();
+                updatePromoValueLabel();
+
+                var prodSel = document.getElementById('promo-products');
+                (p.productIds || []).forEach(function(pid) {
+                    var opt = prodSel.querySelector('option[value="' + pid + '"]');
+                    if (opt) opt.selected = true;
+                });
+                var catSel = document.getElementById('promo-categories');
+                (p.categoryIds || []).forEach(function(cid) {
+                    var opt = catSel.querySelector('option[value="' + cid + '"]');
+                    if (opt) opt.selected = true;
+                });
+            } else {
+                setVal('promo-value', '');
+                setVal('promo-code', '');
+                generatePromoCode();
+            }
+            Modal.show('promo-modal');
+        }
+
+        function togglePromoActive(id, el) {
+            var promos = DB.getPromotions();
+            var p = promos.find(function(x) { return x.id === id; });
+            if (!p) return;
+            p.active = el.checked;
+            DB.setPromotions(promos);
+            Toast.show(p.active ? 'Promoción activada' : 'Promoción desactivada', p.active ? 'success' : 'warning');
+            renderPromotions();
+        }
+
+        function deletePromo(id) {
+            var p = DB.getPromotions().find(function(x) { return x.id === id; });
+            if (!p) return;
+            Modal.confirm('¿Eliminar la promoción "' + (p.name || p.code) + '"? Esta acción no se puede deshacer.', function() {
+                DB.setPromotions(DB.getPromotions().filter(function(x) { return x.id !== id; }));
+                Toast.show('Promoción eliminada', 'success');
+                renderPromotions();
+            });
+        }
+
+        function savePromo(e) {
+            e.preventDefault();
+            var type = getVal('promo-type');
+            var name = getVal('promo-name');
+            var code = getVal('promo-code').toUpperCase();
+            var value = parseFloat(getVal('promo-value'));
+            var minPurchase = parseFloat(getVal('promo-min')) || 0;
+            var usageLimit = parseInt(getVal('promo-limit'), 10);
+            var startDate = getVal('promo-start');
+            var endDate = getVal('promo-end');
+            var appliesTo = getVal('promo-applies') || 'all';
+            var active = document.getElementById('promo-active').checked;
+
+            if (!name) { Toast.show('El nombre es obligatorio', 'error'); return; }
+            if (isNaN(value) || value <= 0) { Toast.show('Ingresa un valor válido', 'error'); return; }
+            if (!code) { Toast.show('El código de cupón es obligatorio', 'error'); return; }
+
+            if (type === 'percentage' && value > 100) { Toast.show('El porcentaje no puede superar 100', 'error'); return; }
+
+            var data = {
+                name: name,
+                type: type,
+                value: value,
+                code: code,
+                startDate: startDate,
+                endDate: endDate,
+                minPurchase: minPurchase,
+                usageLimit: isNaN(usageLimit) || usageLimit < 0 ? 0 : usageLimit,
+                appliesTo: appliesTo,
+                productIds: appliesTo === 'products' ? selectedValues('promo-products') : [],
+                categoryIds: appliesTo === 'categories' ? selectedValues('promo-categories') : [],
+                active: active
+            };
+
+            var promos = DB.getPromotions();
+            if (editingPromoId) {
+                var idx = promos.findIndex(function(x) { return x.id === editingPromoId; });
+                if (idx === -1) return;
+                var prev = promos[idx];
+                data.id = prev.id;
+                data.usedCount = prev.usedCount || 0;
+                data.createdAt = prev.createdAt;
+                promos[idx] = Object.assign({}, prev, data);
+                Toast.show('Promoción actualizada', 'success');
+            } else {
+                data.id = DB.generateId('promo');
+                data.usedCount = 0;
+                data.createdAt = new Date().toISOString().split('T')[0];
+                promos.push(data);
+                Toast.show('Promoción creada correctamente', 'success');
+            }
+            DB.setPromotions(promos);
+            Modal.hide('promo-modal');
+            renderPromotions();
+        }
+
+        initAdminPage('Promociones');
+        if (AdminAuth.isLoggedIn()) {
+            populateSelects();
+            renderPromotions();
+            document.getElementById('promo-form').addEventListener('submit', savePromo);
+        }
+    </script>
+</body>
+</html>

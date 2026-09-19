@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Detalle del libro en LIBRERIA CREATIVO. Información completa, precio, disponibilidad y compra en línea.">
+  <meta name="robots" content="index, follow">
+  <title>Detalle del Libro - LIBRERIA CREATIVO</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .product-gallery img { width: 100%; height: 100%; object-fit: cover; }
+    .breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; color: var(--gray-500); margin-bottom: 20px; }
+    .breadcrumb a { color: var(--gray-500); }
+    .breadcrumb a:hover { color: var(--primary); }
+    .breadcrumb i { width: 12px; height: 12px; color: var(--gray-400); }
+    .breadcrumb-current { color: var(--gray-700); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+    .book-detail-title { font-size: 1.5rem; margin-bottom: 4px; }
+    .book-detail-author { color: var(--gray-500); font-size: 0.95rem; margin-bottom: 8px; }
+    .book-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .book-badges .badge { display: inline-flex; align-items: center; gap: 5px; }
+    .book-badges i { width: 12px; height: 12px; }
+    .book-pricing { display: flex; align-items: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .current-price { font-size: 1.75rem; font-weight: 800; color: var(--primary); }
+    .original-price { font-size: 1.05rem; color: var(--gray-400); text-decoration: line-through; }
+    .off-pill { background: var(--danger); color: var(--white); font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-full); }
+    .book-meta { border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100); padding: 8px 0; margin-bottom: 16px; }
+    .book-meta-item { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 0.9rem; border-bottom: 1px dashed var(--gray-100); }
+    .book-meta-item:last-child { border-bottom: none; }
+    .book-meta-label { color: var(--gray-500); font-weight: 500; flex-shrink: 0; }
+    .book-meta-value { color: var(--gray-800); font-weight: 500; text-align: right; }
+    .qty-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .book-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+    @media (min-width: 480px) { .book-actions { grid-template-columns: 1fr 1fr; } }
+    .book-trust { display: flex; align-items: center; gap: 16px; font-size: 0.8rem; color: var(--gray-500); flex-wrap: wrap; }
+    .book-trust i { width: 14px; height: 14px; color: var(--success); }
+    .book-description { background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 20px; }
+    .book-description p { font-size: 0.95rem; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <div id="mobile-nav" class="mobile-nav"></div>
+
+  <header class="site-header">
+    <div id="header-top" class="header-top"></div>
+    <div id="header-main" class="header-main"></div>
+  </header>
+
+  <main class="section" style="padding-top: 24px;">
+    <div class="container">
+      <nav class="breadcrumb" id="breadcrumb" aria-label="Migajas de pan"></nav>
+
+      <div class="empty-state hidden" id="book-not-found">
+        <div class="empty-state-icon">📚</div>
+        <h3 class="empty-state-title">Libro no encontrado</h3>
+        <p class="empty-state-text">El libro que buscas no existe o ya no está disponible.</p>
+        <a href="catalog.html" class="btn btn-primary">Ver Catálogo</a>
+      </div>
+
+      <div id="book-root">
+        <div class="product-info-grid">
+          <div class="product-gallery" id="book-gallery"></div>
+          <div class="product-info" id="book-info"></div>
+        </div>
+
+        <section class="section" id="description-section">
+          <div class="section-header">
+            <h2 class="section-title">Descripción</h2>
+          </div>
+          <div class="book-description" id="book-description"></div>
+        </section>
+
+        <section class="section" id="related-section">
+          <div class="section-header">
+            <h2 class="section-title">Libros Relacionados</h2>
+            <a href="catalog.html" class="section-link">Ver más <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+          </div>
+          <div class="book-carousel" id="related-carousel"></div>
+        </section>
+
+        <section class="section" id="author-books-section">
+          <div class="section-header">
+            <h2 class="section-title" id="author-books-title">Más del Autor</h2>
+            <a href="catalog.html" class="section-link">Ver más <i class="lucide-chevron-right" style="width:14px;height:14px;"></i></a>
+          </div>
+          <div class="book-carousel" id="author-books-carousel"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script>
+    initPublicPage();
+
+    const config = DB.getConfig();
+    const bookId = getUrlParam('id');
+    const book = DB.getBook(bookId);
+
+    let currentStock = 0;
+    let currentQty = 1;
+
+    function renderCarousel(containerId, list) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = list.map(b => renderBookCard(b, config)).join('');
+    }
+
+    if (!book || !book.active) {
+      document.getElementById('book-root').style.display = 'none';
+      document.getElementById('book-not-found').classList.remove('hidden');
+      document.title = `Libro no encontrado - ${config.storeName}`;
+    } else {
+      renderBook();
+      renderDescription();
+      renderRelated();
+      renderAuthorBooks();
+    }
+
+    function renderBook() {
+      const author = DB.getAuthor(book.authorId);
+      const publisher = DB.getPublisher(book.publisherId);
+      const category = DB.getCategory(book.categoryId);
+      const genre = DB.getGenre(book.genreId);
+      const hasDiscount = book.promoPrice > 0 && book.promoPrice < book.price;
+      const effectivePrice = hasDiscount ? book.promoPrice : book.price;
+      const discountPct = book.discount || Math.round((1 - book.promoPrice / book.price) * 100);
+      currentStock = book.stock;
+      currentQty = 1;
+      const colors = getBookCoverColor(book.id);
+
+      // Breadcrumb
+      document.getElementById('breadcrumb').innerHTML = `
+        <a href="index.html">Inicio</a>
+        <i class="lucide-chevron-right"></i>
+        <a href="catalog.html">Catálogo</a>
+        ${category ? `<i class="lucide-chevron-right"></i><a href="catalog.html?category=${category.id}">${category.name}</a>` : ''}
+        <i class="lucide-chevron-right"></i>
+        <span class="breadcrumb-current">${book.title}</span>`;
+
+      // Gallery
+      document.getElementById('book-gallery').innerHTML = book.cover
+        ? `<img src="${book.cover}" alt="${book.title}">`
+        : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(135deg, ${colors[0]}, ${colors[1]});color:${colors[2]};padding:20px;">
+            <span style="font-size:4rem;">📖</span>
+            <span style="margin-top:12px;font-weight:600;">${book.title}</span>
+          </div>`;
+
+      // Info
+      const stockBadge = currentStock > 0
+        ? `<span class="badge badge-success"><i class="lucide-check-circle"></i> Disponible · ${currentStock} en stock</span>`
+        : `<span class="badge badge-gray"><i class="lucide-x-circle"></i> Agotado</span>`;
+
+      document.getElementById('book-info').innerHTML = `
+        <h1 class="book-detail-title">${book.title}</h1>
+        ${author ? `<div class="book-detail-author">Por <a href="catalog.html?author=${author.id}">${author.name}</a></div>` : ''}
+        <div class="book-badges mt-2 mb-2">
+          ${book.featured ? '<span class="badge badge-primary">Destacado</span>' : ''}
+          ${book.bestseller ? '<span class="badge badge-accent">Más vendido</span>' : ''}
+          ${stockBadge}
+        </div>
+        <div class="book-pricing">
+          <span class="current-price">${formatPrice(effectivePrice, config)}</span>
+          ${hasDiscount ? `<span class="original-price">${formatPrice(book.price, config)}</span><span class="off-pill">-${discountPct}%</span>` : ''}
+        </div>
+        <div class="book-meta">
+          <div class="book-meta-item"><span class="book-meta-label">ISBN</span><span class="book-meta-value">${book.isbn || '—'}</span></div>
+          <div class="book-meta-item"><span class="book-meta-label">Editorial</span><span class="book-meta-value">${publisher ? publisher.name : '—'}</span></div>
+          ${category ? `<div class="book-meta-item"><span class="book-meta-label">Categoría</span><a class="book-meta-value" href="catalog.html?category=${category.id}">${category.name}</a></div>` : ''}
+          ${genre ? `<div class="book-meta-item"><span class="book-meta-label">Género</span><a class="book-meta-value" href="catalog.html?genre=${genre.id}">${genre.name}</a></div>` : ''}
+          <div class="book-meta-item"><span class="book-meta-label">Publicación</span><span class="book-meta-value">${(book.publicationDate || '').split('-')[0] || '—'}</span></div>
+          <div class="book-meta-item"><span class="book-meta-label">Páginas</span><span class="book-meta-value">${book.pages || '—'}</span></div>
+          <div class="book-meta-item"><span class="book-meta-label">Idioma</span><span class="book-meta-value">${book.language || '—'}</span></div>
+          <div class="book-meta-item"><span class="book-meta-label">SKU</span><span class="book-meta-value">${book.sku || '—'}</span></div>
+        </div>
+        <div class="qty-row">
+          <span class="book-meta-label">Cantidad</span>
+          <div class="qty-control">
+            <button type="button" class="qty-btn" onclick="changeQty(-1)" aria-label="Disminuir cantidad">−</button>
+            <span class="qty-value" id="book-qty">1</span>
+            <button type="button" class="qty-btn" id="qty-plus" onclick="changeQty(1)" aria-label="Aumentar cantidad">+</button>
+          </div>
+        </div>
+        <div class="book-actions">
+          <button class="btn btn-primary btn-lg" onclick="addToCart()" ${currentStock <= 0 ? 'disabled' : ''}>
+            <i class="lucide-shopping-cart" style="width:18px;height:18px;"></i> Agregar al Carrito
+          </button>
+          <button class="btn btn-accent btn-lg" onclick="buyNow()" ${currentStock <= 0 ? 'disabled' : ''}>
+            <i class="lucide-zap" style="width:18px;height:18px;"></i> Comprar Ahora
+          </button>
+        </div>
+        <div class="book-trust">
+          <span><i class="lucide-shield-check"></i> Compra segura</span>
+          <span><i class="lucide-truck"></i> Envío a todo el país</span>
+        </div>`;
+
+      document.title = `${book.title} - ${config.storeName}`;
+      const meta = document.querySelector('meta[name="description"]');
+      if (meta && book.description) meta.content = book.description.slice(0, 160);
+    }
+
+    function changeQty(delta) {
+      const min = 1;
+      const max = Math.max(1, currentStock);
+      currentQty = Math.min(max, Math.max(min, currentQty + delta));
+      document.getElementById('book-qty').textContent = currentQty;
+      const plus = document.getElementById('qty-plus');
+      if (plus) plus.disabled = currentQty >= max;
+    }
+
+    function addToCart() {
+      if (currentStock <= 0) return;
+      Cart.addItem(book.id, currentQty);
+    }
+
+    function buyNow() {
+      if (currentStock <= 0) return;
+      Cart.addItem(book.id, currentQty);
+      window.location.href = 'checkout.html';
+    }
+
+    function renderDescription() {
+      document.getElementById('book-description').innerHTML =
+        book.description ? `<p>${book.description}</p>` : '<p class="text-muted">Sin descripción disponible.</p>';
+    }
+
+    function renderRelated() {
+      const related = DB.getBooks().filter(b => b.active && b.id !== book.id && b.categoryId === book.categoryId);
+      renderCarousel('related-carousel', related.slice(0, 10));
+      if (related.length === 0) document.getElementById('related-section').style.display = 'none';
+    }
+
+    function renderAuthorBooks() {
+      const sameAuthor = DB.getBooks().filter(b => b.active && b.id !== book.id && b.authorId === book.authorId);
+      renderCarousel('author-books-carousel', sameAuthor.slice(0, 10));
+      if (sameAuthor.length === 0) {
+        document.getElementById('author-books-section').style.display = 'none';
+      } else {
+        const author = DB.getAuthor(book.authorId);
+        document.getElementById('author-books-title').textContent = author ? `Más de ${author.name}` : 'Más del Autor';
+      }
+    }
+  </script>
+</body>
+</html>

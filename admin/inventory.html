@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | Admin</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <style>
+        .stat-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        @media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+        .admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .admin-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1; }
+        .tool-input { min-width: 220px; flex: 1; }
+        .cover-thumb { width: 40px; height: 56px; border-radius: 6px; object-fit: cover; background: var(--gray-100); flex-shrink: 0; display: block; }
+        .cover-ph { width: 40px; height: 56px; border-radius: 6px; background: var(--primary-bg); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+        .alert-banner { display: flex; gap: 14px; align-items: flex-start; border-radius: var(--radius-md); padding: 16px 18px; margin-bottom: 24px; border: 1px solid; }
+        .alert-banner.warning { background: var(--warning-bg); border-color: #fde68a; color: var(--warning); }
+        .alert-banner.success { background: var(--success-bg); border-color: #a7f3d0; color: var(--success); }
+        .alert-banner-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+        .alert-banner-list { font-size: 0.85rem; color: var(--gray-700); line-height: 1.6; }
+        .quantity-pos { color: var(--success); font-weight: 600; }
+        .quantity-neg { color: var(--danger); font-weight: 600; }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+        @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        .form-grid .form-group { margin-bottom: 14px; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Inventario</h1>
+                        <p class="text-muted text-sm mb-0">Control de existencias y movimientos de stock</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openMovement('', 'entrada')">＋ Registrar Movimiento</button>
+                </div>
+
+                <div id="stock-alerts"></div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">📚</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-total">—</div>
+                            <div class="stat-label">Total Productos</div>
+                            <div class="stat-change up" id="stat-total-hint">—</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon yellow">⚠️</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-low">—</div>
+                            <div class="stat-label">Stock Bajo (&lt; 15)</div>
+                            <div class="stat-change down" id="stat-low-hint">Requieren reposición</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">🚫</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-out">—</div>
+                            <div class="stat-label">Agotados</div>
+                            <div class="stat-change down" id="stat-out-hint">Sin unidades disponibles</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-value">—</div>
+                            <div class="stat-label">Valor Total Inventario</div>
+                            <div class="stat-change up" id="stat-value-hint">Suma stock × precio</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-tools">
+                        <input type="text" class="form-control tool-input" id="inv-search" placeholder="Buscar por título o SKU...">
+                        <select class="form-control" id="inv-status" style="min-width:180px;width:auto;">
+                            <option value="todas">Todos los estados</option>
+                            <option value="bajo">Stock bajo</option>
+                            <option value="agotado">Agotados</option>
+                            <option value="disponible">Disponible</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-wrapper" style="margin-bottom:32px;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>SKU</th>
+                                <th>Stock Actual</th>
+                                <th>Precio</th>
+                                <th>Valor</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="admin-page-header" style="margin-bottom:16px;">
+                    <div>
+                        <h2 class="admin-page-title" style="font-size:1.15rem;">Historial de Movimientos</h2>
+                        <p class="text-muted text-sm mb-0" id="history-count">Cargando...</p>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Producto</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Anterior</th>
+                                <th>Nuevo</th>
+                                <th>Nota</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- REGISTRAR MOVIMIENTO MODAL -->
+    <div class="modal-overlay" id="movement-modal" role="dialog" aria-modal="true" aria-labelledby="movement-modal-title">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="movement-modal-title">Registrar Movimiento</h3>
+                <button type="button" class="modal-close" onclick="Modal.hide('movement-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="movement-form">
+                    <div class="form-group">
+                        <label class="form-label" for="movement-product">Producto *</label>
+                        <select class="form-control" id="movement-product" required onchange="updateMovementStock()"></select>
+                        <div class="form-hint" id="movement-current-stock"></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="movement-type">Tipo *</label>
+                            <select class="form-control" id="movement-type" required onchange="updateMovementHint()">
+                                <option value="entrada">Entrada</option>
+                                <option value="salida">Salida</option>
+                                <option value="ajuste">Ajuste</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="movement-qty">Cantidad *</label>
+                            <input type="number" class="form-control" id="movement-qty" min="0" step="1" placeholder="0" required>
+                            <div class="form-hint" id="movement-hint"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="movement-note">Nota</label>
+                        <textarea class="form-control" id="movement-note" rows="3" placeholder="Motivo del movimiento (reposición, devolución, ajuste)..."></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:0;">
+                        <button type="button" class="btn btn-ghost" onclick="Modal.hide('movement-modal')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Movimiento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function coverHTML(b) {
+            return b.cover
+                ? '<img class="cover-thumb" src="' + b.cover + '" alt="">'
+                : '<div class="cover-ph">📖</div>';
+        }
+
+        function effectivePrice(b) {
+            return (b.promoPrice > 0 && b.promoPrice < b.price) ? b.promoPrice : b.price;
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function getStockInfo(b) {
+            if (b.stock <= 0) return { cls: 'badge-gray', label: 'Agotado' };
+            if (b.stock < 15) return { cls: 'badge-warning', label: 'Stock bajo' };
+            return { cls: 'badge-success', label: 'En stock' };
+        }
+
+        function getUserName(id) {
+            if (!id || id === 'system') return 'Sistema';
+            var u = DB.getAdminUsers().find(function(a) { return a.id === id; });
+            return u ? u.name : id;
+        }
+
+        var TYPE_LABELS = { initial: 'Stock Inicial', sale: 'Venta', entrada: 'Entrada', salida: 'Salida', ajuste: 'Ajuste' };
+        var TYPE_BADGES = { initial: 'badge-info', sale: 'badge-danger', entrada: 'badge-success', salida: 'badge-danger', ajuste: 'badge-warning' };
+
+        function renderStats(books) {
+            var low = books.filter(function(b) { return b.stock > 0 && b.stock < 15; });
+            var out = books.filter(function(b) { return b.stock <= 0; });
+            var totalVal = books.reduce(function(s, b) { return s + (b.stock * effectivePrice(b)); }, 0);
+            var active = books.filter(function(b) { return b.active; }).length;
+            setText('stat-total', books.length);
+            setText('stat-total-hint', active + ' activo' + (active === 1 ? '' : 's'));
+            setText('stat-low', low.length);
+            setText('stat-out', out.length);
+            setText('stat-value', formatPrice(totalVal));
+        }
+
+        function renderAlerts() {
+            var books = DB.getBooks();
+            var low = books.filter(function(b) { return b.stock > 0 && b.stock < 15; });
+            var out = books.filter(function(b) { return b.stock <= 0; });
+            var box = document.getElementById('stock-alerts');
+            if (low.length === 0 && out.length === 0) {
+                box.innerHTML = '<div class="alert-banner success"><div style="font-size:1.2rem;">✅</div><div>' +
+                    '<div class="alert-banner-title">Todo en orden</div>' +
+                    '<div class="alert-banner-list">No hay libros con stock bajo ni agotados.</div></div></div>';
+                return;
+            }
+            var list = low.slice(0, 5).map(function(b) {
+                return '<strong>' + b.title + '</strong> (' + b.stock + ' u.)';
+            }).join(', ');
+            var extras = '';
+            if (low.length > 5) extras = ' y ' + (low.length - 5) + ' más';
+            var outRow = out.length > 0 ? '<br>Agotados: <strong>' + out.map(function(b) { return b.title; }).join(', ') + '</strong>' : '';
+            box.innerHTML = '<div class="alert-banner warning"><div style="font-size:1.2rem;">⚠️</div><div>' +
+                '<div class="alert-banner-title">Hay ' + low.length + ' libro' + (low.length === 1 ? '' : 's') + ' con stock bajo y ' + out.length + ' agotado' + (out.length === 1 ? '' : 's') + '</div>' +
+                '<div class="alert-banner-list">' + list + extras + outRow + '</div></div></div>';
+        }
+
+        function renderInventory() {
+            var q = (document.getElementById('inv-search').value || '').toLowerCase();
+            var f = document.getElementById('inv-status').value;
+            var books = DB.getBooks();
+
+            if (q) {
+                books = books.filter(function(b) {
+                    return b.title.toLowerCase().indexOf(q) !== -1 || b.sku.toLowerCase().indexOf(q) !== -1;
+                });
+            }
+            if (f === 'bajo') books = books.filter(function(b) { return b.stock > 0 && b.stock < 15; });
+            else if (f === 'agotado') books = books.filter(function(b) { return b.stock <= 0; });
+            else if (f === 'disponible') books = books.filter(function(b) { return b.stock >= 15; });
+
+            renderStats(DB.getBooks());
+
+            var tbody = document.getElementById('inventory-tbody');
+            if (books.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">' +
+                    '<div class="empty-state-icon">📦</div>' +
+                    '<div class="empty-state-title">Sin resultados</div>' +
+                    '<div class="empty-state-text">No se encontraron productos con los filtros actuales.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = books.map(function(b) {
+                var s = getStockInfo(b);
+                var val = formatPrice(b.stock * effectivePrice(b));
+                return '<tr>' +
+                    '<td><div style="display:flex;align-items:center;gap:12px;">' + coverHTML(b) +
+                    '<span class="font-semibold">' + b.title + '</span></div></td>' +
+                    '<td class="text-muted">' + (b.sku || '—') + '</td>' +
+                    '<td><span class="badge ' + s.cls + '">' + b.stock + '</span></td>' +
+                    '<td>' + formatPrice(effectivePrice(b)) + '</td>' +
+                    '<td class="font-semibold">' + val + '</td>' +
+                    '<td><span class="badge ' + s.cls + '">' + s.label + '</span></td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="background:var(--success-bg);color:var(--success);" onclick="openMovement(\'' + b.id + '\',\'entrada\')" title="Registrar entrada">＋</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="background:var(--danger-bg);color:var(--danger);" onclick="openMovement(\'' + b.id + '\',\'salida\')" title="Registrar salida">−</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openMovement(\'' + b.id + '\',\'ajuste\')" title="Ajustar stock">↺</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function renderHistory() {
+            var records = DB.getInventory().slice().sort(function(a, b) {
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            setText('history-count', records.length + ' movimiento' + (records.length === 1 ? '' : 's') + ' registrados');
+            var tbody = document.getElementById('history-tbody');
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">' +
+                    '<div class="empty-state-icon">🗂️</div>' +
+                    '<div class="empty-state-title">Sin movimientos</div>' +
+                    '<div class="empty-state-text">El historial de movimientos aparecerá aquí.</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = records.map(function(r) {
+                var b = DB.getBook(r.bookId);
+                var typeLabel = TYPE_LABELS[r.type] || r.type;
+                var typeBadge = TYPE_BADGES[r.type] || 'badge-gray';
+                var qty = parseInt(r.quantity, 10) || 0;
+                var qtyHTML = qty === 0
+                    ? '<span class="text-muted">0</span>'
+                    : (qty > 0 ? '<span class="quantity-pos">+' + qty + '</span>' : '<span class="quantity-neg">' + qty + '</span>');
+                return '<tr>' +
+                    '<td class="text-muted">' + formatDate(r.createdAt) + '</td>' +
+                    '<td class="font-semibold">' + (b ? b.title : 'Producto eliminado') + '</td>' +
+                    '<td><span class="badge ' + typeBadge + '">' + typeLabel + '</span></td>' +
+                    '<td>' + qtyHTML + '</td>' +
+                    '<td class="text-muted">' + r.previousStock + '</td>' +
+                    '<td class="font-semibold">' + r.newStock + '</td>' +
+                    '<td class="text-muted" style="max-width:220px;">' + (r.note || '—') + '</td>' +
+                    '<td class="text-muted">' + getUserName(r.userId) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function populateUsersSelect() {
+            var wrapper = document.getElementById('movement-product');
+            var books = DB.getBooks().slice().sort(function(a, b) { return a.title.localeCompare(b.title); });
+            wrapper.innerHTML = '<option value="">Selecciona un producto</option>' +
+                books.map(function(b) { return '<option value="' + b.id + '">' + b.title + ' (' + b.sku + ')</option>'; }).join('');
+        }
+
+        function updateMovementStock() {
+            var id = document.getElementById('movement-product').value;
+            var b = DB.getBook(id);
+            var el = document.getElementById('movement-current-stock');
+            if (el) el.textContent = b ? ('Stock actual: ' + b.stock + ' unidades') : '';
+        }
+
+        function updateMovementHint() {
+            var type = document.getElementById('movement-type').value;
+            var hint = document.getElementById('movement-hint');
+            if (!hint) return;
+            if (type === 'ajuste') hint.textContent = 'Cantidad = nuevo stock absoluto del producto.';
+            else if (type === 'entrada') hint.textContent = 'Cantidad de unidades que ingresan al inventario.';
+            else hint.textContent = 'Cantidad de unidades que salen del inventario.';
+        }
+
+        function openMovement(bookId, type) {
+            document.getElementById('movement-form').reset();
+            setVal('movement-product', bookId || '');
+            setVal('movement-type', type || 'entrada');
+            updateMovementStock();
+            updateMovementHint();
+            Modal.show('movement-modal');
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function saveMovement(e) {
+            e.preventDefault();
+            var bookId = document.getElementById('movement-product').value;
+            var type = document.getElementById('movement-type').value;
+            var qty = parseInt(document.getElementById('movement-qty').value, 10);
+            var note = document.getElementById('movement-note').value.trim();
+
+            var book = DB.getBook(bookId);
+            if (!book) { Toast.show('Selecciona un producto', 'error'); return; }
+            if (isNaN(qty) || qty < 0 || (type !== 'ajuste' && qty === 0)) {
+                Toast.show(type === 'ajuste' ? 'Ingresa un stock válido' : 'La cantidad debe ser mayor a 0', 'error');
+                return;
+            }
+
+            var prev = book.stock;
+            var newStock, recQty;
+            if (type === 'entrada') { newStock = prev + qty; recQty = qty; }
+            else if (type === 'salida') {
+                if (qty > prev) { Toast.show('No hay suficientes unidades para la salida', 'error'); return; }
+                newStock = prev - qty; recQty = -qty;
+            } else { newStock = qty; recQty = qty - prev; }
+
+            var defaultNotes = { entrada: 'Entrada manual', salida: 'Salida manual', ajuste: 'Ajuste de inventario' };
+            var currentAdmin = AdminAuth.getUser();
+
+            var books = DB.getBooks();
+            book.stock = newStock;
+            DB.setBooks(books);
+
+            var inv = DB.getInventory();
+            inv.push({
+                id: DB.generateId('inv'),
+                bookId: book.id,
+                type: type,
+                quantity: recQty,
+                previousStock: prev,
+                newStock: newStock,
+                note: note || defaultNotes[type],
+                userId: currentAdmin ? currentAdmin.id : 'system',
+                createdAt: new Date().toISOString()
+            });
+            DB.setInventory(inv);
+
+            Toast.show('Movimiento registrado: ' + book.title + ' (' + prev + ' → ' + newStock + ')', 'success');
+            Modal.hide('movement-modal');
+            renderInventory();
+            renderAlerts();
+            renderHistory();
+        }
+
+        initAdminPage('Inventario');
+        if (AdminAuth.isLoggedIn()) {
+            populateUsersSelect();
+            renderInventory();
+            renderAlerts();
+            renderHistory();
+            document.getElementById('inv-search').addEventListener('input', renderInventory);
+            document.getElementById('inv-status').addEventListener('change', renderInventory);
+            document.getElementById('movement-form').addEventListener('submit', saveMovement);
+        }
+    </script>
+</body>
+</html>

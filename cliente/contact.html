@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div id="mobile-nav" class="mobile-nav"></div>
+    <header class="site-header">
+        <div id="header-top" class="header-top"></div>
+        <div id="header-main" class="header-main"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Contacto</h1>
+            </div>
+
+            <div class="contact-layout">
+                <div class="contact-info-col">
+                    <div id="contact-info-cards" class="contact-info-cards"></div>
+                    <div id="social-links" class="social-links"></div>
+                </div>
+
+                <div class="contact-form-col">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3>Envianos un Mensaje</h3>
+                            <form id="contact-form" class="contact-form">
+                                <div class="form-group">
+                                    <label for="contact-name">Nombre</label>
+                                    <input type="text" id="contact-name" class="form-control" placeholder="Tu nombre" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="contact-email">Email</label>
+                                        <input type="email" id="contact-email" class="form-control" placeholder="tu@email.com" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="contact-phone">Telefono</label>
+                                        <input type="tel" id="contact-phone" class="form-control" placeholder="Tu telefono">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-subject">Asunto</label>
+                                    <input type="text" id="contact-subject" class="form-control" placeholder="Asunto del mensaje" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-message">Mensaje</label>
+                                    <textarea id="contact-message" class="form-control" rows="5" placeholder="Escribe tu mensaje..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="lucide-send"></i> Enviar Mensaje
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="map-section" class="contact-map-section" style="display:none;">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>Nuestra Ubicacion</h3>
+                        <div id="map-container" class="map-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer id="site-footer" class="site-footer"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initPublicPage();
+            const config = DB.getConfig();
+            renderContactInfo(config);
+            renderSocialLinks(config);
+
+            if (config.mapEnabled) {
+                document.getElementById('map-section').style.display = 'block';
+                document.getElementById('map-container').innerHTML = config.mapEmbed || '<p class="text-muted">Mapa no disponible.</p>';
+            }
+
+            document.getElementById('contact-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleSubmit();
+            });
+        });
+
+        function renderContactInfo(config) {
+            const cards = document.getElementById('contact-info-cards');
+            const contact = config.contact || {};
+
+            const items = [];
+            if (contact.whatsapp) {
+                items.push({ icon: 'lucide-message-circle', label: 'WhatsApp', value: contact.whatsapp, href: `https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}` });
+            }
+            if (contact.phone) {
+                items.push({ icon: 'lucide-phone', label: 'Telefono', value: contact.phone, href: `tel:${contact.phone}` });
+            }
+            if (contact.email) {
+                items.push({ icon: 'lucide-mail', label: 'Email', value: contact.email, href: `mailto:${contact.email}` });
+            }
+            if (contact.address) {
+                items.push({ icon: 'lucide-map-pin', label: 'Direccion', value: contact.address, href: null });
+            }
+            if (contact.hours) {
+                items.push({ icon: 'lucide-clock', label: 'Horario', value: contact.hours, href: null });
+            }
+
+            cards.innerHTML = items.map(item => `
+                <div class="contact-info-card card">
+                    <div class="contact-info-card-inner">
+                        <div class="contact-info-icon">
+                            <i class="${item.icon}"></i>
+                        </div>
+                        <div class="contact-info-text">
+                            <span class="contact-info-label">${item.label}</span>
+                            ${item.href ? `<a href="${item.href}" target="_blank" class="contact-info-value">${item.value}</a>` : `<span class="contact-info-value">${item.value}</span>`}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSocialLinks(config) {
+            const container = document.getElementById('social-links');
+            const socials = config.social || {};
+
+            const links = [];
+            if (socials.facebook) links.push({ icon: 'lucide-facebook', url: socials.facebook, label: 'Facebook' });
+            if (socials.instagram) links.push({ icon: 'lucide-instagram', url: socials.instagram, label: 'Instagram' });
+            if (socials.twitter) links.push({ icon: 'lucide-twitter', url: socials.twitter, label: 'Twitter' });
+            if (socials.tiktok) links.push({ icon: 'lucide-music', url: socials.tiktok, label: 'TikTok' });
+
+            if (links.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.innerHTML = `<h3>Redes Sociales</h3><div class="social-links-grid">${links.map(l => `
+                <a href="${l.url}" target="_blank" class="social-link" title="${l.label}">
+                    <i class="${l.icon}"></i>
+                </a>
+            `).join('')}</div>`;
+        }
+
+        function handleSubmit() {
+            const user = Auth.getCustomer();
+            const name = document.getElementById('contact-name').value.trim();
+            const email = document.getElementById('contact-email').value.trim();
+            const phone = document.getElementById('contact-phone').value.trim();
+            const subject = document.getElementById('contact-subject').value.trim();
+            const message = document.getElementById('contact-message').value.trim();
+
+            if (!name || !email || !subject || !message) {
+                showToast('Por favor completa todos los campos requeridos.', 'error');
+                return;
+            }
+
+            const messages = DB.getContactMessages();
+            const newMsg = {
+                id: 'msg_' + Date.now(),
+                customerId: user ? user.id : null,
+                name: name,
+                email: email,
+                phone: phone,
+                subject: subject,
+                message: message,
+                read: false,
+                createdAt: new Date().toISOString()
+            };
+            messages.push(newMsg);
+            DB.setContactMessages(messages);
+
+            if (user) {
+                const notifications = DB.getNotifications();
+                notifications.push({
+                    id: 'notif_' + Date.now(),
+                    type: 'contact',
+                    message: 'Nuevo mensaje de contacto de ' + name,
+                    read: false,
+                    createdAt: new Date().toISOString()
+                });
+                DB.setNotifications(notifications);
+            }
+
+            document.getElementById('contact-form').reset();
+            Toast.show('Mensaje enviado con éxito. Te responderemos pronto.', 'success');
+        }
+    </script>
+</body>
+</html>

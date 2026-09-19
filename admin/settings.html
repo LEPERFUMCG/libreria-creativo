@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración General | Admin</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .config-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:24px;margin-bottom:24px}
+    .config-card h3{font-size:1.1rem;font-weight:600;color:#1a1a2e;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .form-group input[type="color"]{height:48px;padding:4px;cursor:pointer}
+    .form-group input[type="file"]{padding:8px;background:#f9fafb}
+    .color-group{display:flex;gap:16px;flex-wrap:wrap}
+    .color-group .form-group{flex:1;min-width:150px}
+    .preview-box{width:100%;height:80px;border:2px dashed #d1d5db;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-top:8px;overflow:hidden;background:#f9fafb}
+    .preview-box img{max-height:100%;max-width:100%;object-fit:contain}
+    .save-section{text-align:right;padding:20px 0}
+    .save-btn{background:#2563eb;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s}
+    .save-btn:hover{background:#1d4ed8}
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+    <aside class="admin-sidebar" id="admin-sidebar"></aside>
+    <main class="admin-main">
+      <header class="admin-topbar" id="admin-topbar"></header>
+      <div class="admin-content">
+
+        <form id="settings-form">
+          <div class="config-card">
+            <h3>Información del Negocio</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Nombre del Negocio</label>
+                <input type="text" id="cfg-name" placeholder="Nombre de la librería">
+              </div>
+              <div class="form-group">
+                <label>Slogan</label>
+                <input type="text" id="cfg-slogan" placeholder="Tu lema o frase">
+              </div>
+              <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" id="cfg-email" placeholder="correo@ejemplo.com">
+              </div>
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="text" id="cfg-phone" placeholder="+503 0000-0000">
+              </div>
+              <div class="form-group">
+                <label>WhatsApp</label>
+                <input type="text" id="cfg-whatsapp" placeholder="+503 0000-0000">
+              </div>
+              <div class="form-group">
+                <label>Ciudad</label>
+                <input type="text" id="cfg-city" placeholder="Ciudad">
+              </div>
+              <div class="form-group">
+                <label>Departamento</label>
+                <input type="text" id="cfg-department" placeholder="Departamento">
+              </div>
+              <div class="form-group">
+                <label>Horarios</label>
+                <input type="text" id="cfg-hours" placeholder="Lun-Sab 8:00AM - 6:00PM">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:4px">
+              <label>Dirección</label>
+              <input type="text" id="cfg-address" placeholder="Dirección completa">
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Logo y Favicon</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Logo del Sitio</label>
+                <input type="file" id="cfg-logo-input" accept="image/*">
+                <div class="preview-box" id="cfg-logo-preview"></div>
+              </div>
+              <div class="form-group">
+                <label>Favicon</label>
+                <input type="file" id="cfg-favicon-input" accept="image/*">
+                <div class="preview-box" id="cfg-favicon-preview"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Colores</h3>
+            <div class="color-group">
+              <div class="form-group">
+                <label>Color Primario</label>
+                <input type="color" id="cfg-color-primary" value="#2563eb">
+              </div>
+              <div class="form-group">
+                <label>Color Secundario</label>
+                <input type="color" id="cfg-color-secondary" value="#1a1a2e">
+              </div>
+              <div class="form-group">
+                <label>Color Acento</label>
+                <input type="color" id="cfg-color-accent" value="#f59e0b">
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Configuración Monetaria</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Moneda</label>
+                <input type="text" id="cfg-currency" placeholder="USD">
+              </div>
+              <div class="form-group">
+                <label>Tasa de Impuesto (%)</label>
+                <input type="number" id="cfg-tax" placeholder="13" min="0" max="100" step="0.1">
+              </div>
+              <div class="form-group">
+                <label>Envío Gratis a partir de ($)</label>
+                <input type="number" id="cfg-free-shipping" placeholder="50" min="0" step="0.01">
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h3>Redes Sociales</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Facebook</label>
+                <input type="url" id="cfg-facebook" placeholder="https://facebook.com/tupagina">
+              </div>
+              <div class="form-group">
+                <label>Instagram</label>
+                <input type="url" id="cfg-instagram" placeholder="https://instagram.com/tuusuario">
+              </div>
+              <div class="form-group">
+                <label>Twitter / X</label>
+                <input type="url" id="cfg-twitter" placeholder="https://twitter.com/tuusuario">
+              </div>
+            </div>
+          </div>
+
+          <div class="save-section">
+            <button type="submit" class="save-btn">Guardar Configuración</button>
+          </div>
+        </form>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    initAdminPage('Configuración');
+
+    const config = DB.getConfig();
+    const form = document.getElementById('settings-form');
+
+    function fillForm(cfg) {
+      document.getElementById('cfg-name').value = cfg.businessName || '';
+      document.getElementById('cfg-slogan').value = cfg.slogan || '';
+      document.getElementById('cfg-email').value = cfg.email || '';
+      document.getElementById('cfg-phone').value = cfg.phone || '';
+      document.getElementById('cfg-whatsapp').value = cfg.whatsapp || '';
+      document.getElementById('cfg-city').value = cfg.city || '';
+      document.getElementById('cfg-department').value = cfg.department || '';
+      document.getElementById('cfg-hours').value = cfg.hours || '';
+      document.getElementById('cfg-address').value = cfg.address || '';
+      document.getElementById('cfg-color-primary').value = cfg.primaryColor || '#2563eb';
+      document.getElementById('cfg-color-secondary').value = cfg.secondaryColor || '#1a1a2e';
+      document.getElementById('cfg-color-accent').value = cfg.accentColor || '#f59e0b';
+      document.getElementById('cfg-currency').value = cfg.currency || 'USD';
+      document.getElementById('cfg-tax').value = cfg.taxRate ?? 13;
+      document.getElementById('cfg-free-shipping').value = cfg.freeShippingMin ?? 50;
+      document.getElementById('cfg-facebook').value = cfg.social?.facebook || '';
+      document.getElementById('cfg-instagram').value = cfg.social?.instagram || '';
+      document.getElementById('cfg-twitter').value = cfg.social?.twitter || '';
+
+      if (cfg.logo) {
+        document.getElementById('cfg-logo-preview').innerHTML = '<img src="' + cfg.logo + '">';
+      }
+      if (cfg.favicon) {
+        document.getElementById('cfg-favicon-preview').innerHTML = '<img src="' + cfg.favicon + '">';
+      }
+    }
+
+    fillForm(config);
+
+    document.getElementById('cfg-logo-input').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('cfg-logo-preview').innerHTML = '<img src="' + e.target.result + '">';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('cfg-favicon-input').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('cfg-favicon-preview').innerHTML = '<img src="' + e.target.result + '">';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const logoImg = document.querySelector('#cfg-logo-preview img');
+      const faviconImg = document.querySelector('#cfg-favicon-preview img');
+
+      const updated = {
+        ...config,
+        businessName: document.getElementById('cfg-name').value,
+        slogan: document.getElementById('cfg-slogan').value,
+        email: document.getElementById('cfg-email').value,
+        phone: document.getElementById('cfg-phone').value,
+        whatsapp: document.getElementById('cfg-whatsapp').value,
+        city: document.getElementById('cfg-city').value,
+        department: document.getElementById('cfg-department').value,
+        hours: document.getElementById('cfg-hours').value,
+        address: document.getElementById('cfg-address').value,
+        logo: logoImg ? logoImg.src : config.logo,
+        favicon: faviconImg ? faviconImg.src : config.favicon,
+        primaryColor: document.getElementById('cfg-color-primary').value,
+        secondaryColor: document.getElementById('cfg-color-secondary').value,
+        accentColor: document.getElementById('cfg-color-accent').value,
+        currency: document.getElementById('cfg-currency').value,
+        taxRate: parseFloat(document.getElementById('cfg-tax').value) || 0,
+        freeShippingMin: parseFloat(document.getElementById('cfg-free-shipping').value) || 0,
+        social: {
+          facebook: document.getElementById('cfg-facebook').value,
+          instagram: document.getElementById('cfg-instagram').value,
+          twitter: document.getElementById('cfg-twitter').value
+        }
+      };
+
+      DB.setConfig(updated);
+      showToast('Configuración guardada correctamente');
+    });
+  </script>
+</body>
+</html>

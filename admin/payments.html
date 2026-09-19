@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagos y Entrega | Admin</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .tabs{display:flex;gap:0;margin-bottom:24px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden}
+    .tab-btn{flex:1;padding:14px 20px;border:none;background:none;font-size:.9rem;font-weight:600;color:#6b7280;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border-bottom:2px solid transparent}
+    .tab-btn.active{color:#2563eb;background:#eff6ff;border-bottom-color:#2563eb}
+    .tab-btn:hover:not(.active){background:#f9fafb;color:#374151}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+    .section-header h3{font-size:1rem;font-weight:600;color:#1a1a2e;margin:0}
+    .add-btn{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s;display:flex;align-items:center;gap:6px}
+    .add-btn:hover{background:#1d4ed8}
+
+    .data-table-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden}
+    .data-table{width:100%;border-collapse:collapse}
+    .data-table th{background:#f9fafb;padding:12px 16px;text-align:left;font-size:.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb}
+    .data-table td{padding:14px 16px;font-size:.9rem;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+    .data-table tr:hover td{background:#fafafa}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+    .badge-active{background:#dcfce7;color:#16a34a}
+    .badge-inactive{background:#fee2e2;color:#dc2626}
+    .table-actions{display:flex;gap:6px}
+    .table-actions button{background:none;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:.8rem;transition:all .2s}
+    .table-actions .edit-btn{color:#2563eb}
+    .table-actions .edit-btn:hover{background:#eff6ff;border-color:#2563eb}
+    .table-actions .delete-btn{color:#dc2626}
+    .table-actions .delete-btn:hover{background:#fef2f2;border-color:#dc2626}
+
+    .mobile-card{display:none;background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px;margin-bottom:12px}
+    .mobile-card .card-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.85rem}
+    .mobile-card .card-row .label{color:#9ca3af;font-weight:500}
+    .mobile-card .card-row .value{font-weight:600;color:#374151}
+    .mobile-card .card-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6}
+
+    .empty-state{text-align:center;padding:40px 20px;color:#9ca3af}
+    .empty-state .empty-icon{font-size:2.5rem;margin-bottom:8px}
+    .empty-state p{font-size:.9rem}
+
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:#fff;border-radius:12px;padding:28px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+    .modal h3{font-size:1.1rem;font-weight:600;color:#1a1a2e;margin:0 0 20px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-group input,.form-group textarea{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif}
+    .form-group input:focus,.form-group textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .form-group textarea{min-height:80px;resize:vertical}
+    .modal-check{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .modal-check input{width:auto}
+    .modal-check label{margin:0;font-size:.9rem}
+    .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:20px}
+    .modal-actions .cancel-btn{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
+    .modal-actions .cancel-btn:hover{background:#e5e7eb}
+    .modal-actions .confirm-btn{background:#2563eb;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+    .modal-actions .confirm-btn:hover{background:#1d4ed8}
+
+    @media(max-width:640px){
+      .data-table-card{display:none}
+      .mobile-card{display:block}
+    }
+    @media(min-width:641px){
+      .mobile-card{display:none!important}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+    <aside class="admin-sidebar" id="admin-sidebar"></aside>
+    <main class="admin-main">
+      <header class="admin-topbar" id="admin-topbar"></header>
+      <div class="admin-content">
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="payments-tab">Métodos de Pago</button>
+          <button class="tab-btn" data-tab="delivery-tab">Métodos de Entrega</button>
+        </div>
+
+        <div class="tab-content active" id="payments-tab">
+          <div class="section-header">
+            <h3>Métodos de Pago</h3>
+            <button class="add-btn" id="add-payment-btn">+ Nuevo Método</button>
+          </div>
+          <div class="data-table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Activo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="payments-tbody"></tbody>
+            </table>
+          </div>
+          <div id="payments-mobile"></div>
+        </div>
+
+        <div class="tab-content" id="delivery-tab">
+          <div class="section-header">
+            <h3>Métodos de Entrega</h3>
+            <button class="add-btn" id="add-delivery-btn">+ Nuevo Método</button>
+          </div>
+          <div class="data-table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Activo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="delivery-tbody"></tbody>
+            </table>
+          </div>
+          <div id="delivery-mobile"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="item-modal">
+    <div class="modal">
+      <h3 id="modal-title">Nuevo Método</h3>
+      <form id="item-form">
+        <input type="hidden" id="item-id">
+        <input type="hidden" id="item-type" value="payment">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="item-name" placeholder="Nombre del método" required>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea id="item-description" placeholder="Describe brevemente este método..."></textarea>
+        </div>
+        <div class="modal-check">
+          <input type="checkbox" id="item-active" checked>
+          <label for="item-active">Activo</label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" id="modal-cancel-btn">Cancelar</button>
+          <button type="submit" class="confirm-btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    initAdminPage('Pagos y Entrega');
+
+    var paymentMethods = DB.getPaymentMethods() || [];
+    var deliveryMethods = DB.getDeliveryMethods() || [];
+    var editingIdx = -1;
+    var currentType = 'payment';
+
+    function generateId(type) {
+      return (type === 'payment' ? 'pm_' : 'dm_') + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function getActiveList() {
+      return currentType === 'payment' ? paymentMethods : deliveryMethods;
+    }
+
+    function setActiveList(list) {
+      if (currentType === 'payment') {
+        paymentMethods = list;
+      } else {
+        deliveryMethods = list;
+      }
+    }
+
+    function renderTable(type) {
+      var list = type === 'payment' ? paymentMethods : deliveryMethods;
+      var tbodyId = type === 'payment' ? 'payments-tbody' : 'delivery-tbody';
+      var mobileId = type === 'payment' ? 'payments-mobile' : 'delivery-mobile';
+      var tbody = document.getElementById(tbodyId);
+      var mobile = document.getElementById(mobileId);
+      tbody.innerHTML = '';
+      mobile.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-icon">&#128196;</div><p>No hay métodos de ' + (type === 'payment' ? 'pago' : 'entrega') + ' registrados</p></td></tr>';
+        return;
+      }
+
+      list.forEach(function (item, idx) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td style="font-weight:600">' + escapeHtml(item.name) + '</td>' +
+          '<td style="max-width:280px;color:#6b7280">' + escapeHtml(item.description || '-') + '</td>' +
+          '<td><span class="badge ' + (item.active ? 'badge-active' : 'badge-inactive') + '">' + (item.active ? 'Activo' : 'Inactivo') + '</span></td>' +
+          '<td><div class="table-actions">' +
+            '<button class="edit-btn" data-idx="' + idx + '">&#9998; Editar</button>' +
+            '<button class="delete-btn" data-idx="' + idx + '">&#128465; Eliminar</button>' +
+          '</div></td>';
+        tbody.appendChild(tr);
+
+        var card = document.createElement('div');
+        card.className = 'mobile-card';
+        card.innerHTML =
+          '<div class="card-row"><span class="label">Nombre</span><span class="value">' + escapeHtml(item.name) + '</span></div>' +
+          '<div class="card-row"><span class="label">Descripción</span><span class="value">' + escapeHtml(item.description || '-') + '</span></div>' +
+          '<div class="card-row"><span class="label">Activo</span><span class="value"><span class="badge ' + (item.active ? 'badge-active' : 'badge-inactive') + '">' + (item.active ? 'Sí' : 'No') + '</span></span></div>' +
+          '<div class="card-actions">' +
+            '<button class="edit-btn" data-idx="' + idx + '" style="background:none;border:1px solid #d1d5db;padding:6px 14px;border-radius:6px;color:#2563eb;font-size:.85rem;cursor:pointer;font-family:Inter,sans-serif">Editar</button>' +
+            '<button class="delete-btn" data-idx="' + idx + '" style="background:none;border:1px solid #d1d5db;padding:6px 14px;border-radius:6px;color:#dc2626;font-size:.85rem;cursor:pointer;font-family:Inter,sans-serif">Eliminar</button>' +
+          '</div>';
+        mobile.appendChild(card);
+      });
+
+      var container = document.getElementById(tbodyId).closest('.data-table-card').parentElement;
+      tbody.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openModal(type, parseInt(this.dataset.idx)); });
+      });
+      tbody.querySelectorAll('.delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { deleteItem(type, parseInt(this.dataset.idx)); });
+      });
+      mobile.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openModal(type, parseInt(this.dataset.idx)); });
+      });
+      mobile.querySelectorAll('.delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { deleteItem(type, parseInt(this.dataset.idx)); });
+      });
+    }
+
+    function openModal(type, idx) {
+      currentType = type;
+      editingIdx = idx !== undefined ? idx : -1;
+      var typeName = type === 'payment' ? 'Método de Pago' : 'Método de Entrega';
+      var list = type === 'payment' ? paymentMethods : deliveryMethods;
+
+      document.getElementById('item-type').value = type;
+      if (editingIdx >= 0) {
+        document.getElementById('modal-title').textContent = 'Editar ' + typeName;
+        var item = list[editingIdx];
+        document.getElementById('item-id').value = item.id;
+        document.getElementById('item-name').value = item.name;
+        document.getElementById('item-description').value = item.description || '';
+        document.getElementById('item-active').checked = item.active;
+      } else {
+        document.getElementById('modal-title').textContent = 'Nuevo ' + typeName;
+        document.getElementById('item-form').reset();
+        document.getElementById('item-active').checked = true;
+        document.getElementById('item-id').value = '';
+      }
+      document.getElementById('item-modal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('item-modal').classList.remove('show');
+      editingIdx = -1;
+    }
+
+    function deleteItem(type, idx) {
+      var list = type === 'payment' ? paymentMethods : deliveryMethods;
+      var typeName = type === 'payment' ? 'método de pago' : 'método de entrega';
+      if (!confirm('¿Eliminar el ' + typeName + ' "' + list[idx].name + '"?')) return;
+      list.splice(idx, 1);
+      if (type === 'payment') {
+        DB.setPaymentMethods(paymentMethods);
+      } else {
+        DB.setDeliveryMethods(deliveryMethods);
+      }
+      renderTable(type);
+      showToast(typeName.charAt(0).toUpperCase() + typeName.slice(1) + ' eliminado');
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function (c) { c.classList.remove('active'); });
+        this.classList.add('active');
+        document.getElementById(this.dataset.tab).classList.add('active');
+      });
+    });
+
+    document.getElementById('add-payment-btn').addEventListener('click', function () { openModal('payment'); });
+    document.getElementById('add-delivery-btn').addEventListener('click', function () { openModal('delivery'); });
+    document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('item-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.getElementById('item-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var type = document.getElementById('item-type').value;
+      var list = type === 'payment' ? paymentMethods : deliveryMethods;
+      var typeName = type === 'payment' ? 'Método de pago' : 'Método de entrega';
+
+      var itemData = {
+        id: document.getElementById('item-id').value || generateId(type),
+        name: document.getElementById('item-name').value.trim(),
+        description: document.getElementById('item-description').value.trim(),
+        active: document.getElementById('item-active').checked
+      };
+
+      if (editingIdx >= 0) {
+        list[editingIdx] = itemData;
+      } else {
+        list.push(itemData);
+      }
+
+      if (type === 'payment') {
+        DB.setPaymentMethods(paymentMethods);
+      } else {
+        DB.setDeliveryMethods(deliveryMethods);
+      }
+
+      closeModal();
+      renderTable(type);
+      showToast((editingIdx >= 0 ? typeName + ' actualizado' : typeName + ' creado'));
+    });
+
+    renderTable('payment');
+    renderTable('delivery');
+  </script>
+</body>
+</html>

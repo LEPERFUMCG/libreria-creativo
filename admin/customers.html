@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .admin-toolbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        margin-bottom: 16px;
+                    }
+                    .admin-tools {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        flex: 1;
+                    }
+                    .tool-input { min-width: 260px; flex: 1; }
+                    .modal-lg { max-width: 900px; }
+                    .profile-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                        padding-bottom: 16px;
+                        border-bottom: 1px solid var(--gray-200);
+                        margin-bottom: 16px;
+                        flex-wrap: wrap;
+                    }
+                    .avatar-lg {
+                        width: 64px;
+                        height: 64px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                        color: var(--white);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.6rem;
+                        font-weight: 800;
+                        flex-shrink: 0;
+                    }
+                    .stats-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 12px;
+                        margin-bottom: 16px;
+                    }
+                    @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+                    .mini-stat {
+                        background: var(--gray-50);
+                        border: 1px solid var(--gray-200);
+                        border-radius: var(--radius-md);
+                        padding: 12px 14px;
+                    }
+                    .mini-stat .val { font-size: 1.15rem; font-weight: 700; color: var(--gray-900); }
+                    .mini-stat .lbl { font-size: 0.72rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.4px; }
+                    .detail-section {
+                        background: var(--gray-50);
+                        border: 1px solid var(--gray-200);
+                        border-radius: var(--radius-md);
+                        padding: 14px 16px;
+                        margin-bottom: 16px;
+                    }
+                    .detail-section-title {
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: var(--gray-500);
+                        margin-bottom: 10px;
+                    }
+                    .table-shrink { box-shadow: none; border-radius: 6px; }
+                    .addr-list { list-style: none; margin: 0; padding: 0; }
+                    .addr-item {
+                        display: flex;
+                        gap: 10px;
+                        padding: 8px 0;
+                        border-bottom: 1px solid var(--gray-100);
+                        font-size: 0.83rem;
+                    }
+                    .addr-item:last-child { border-bottom: none; }
+                    .addr-item .addr-icon {
+                        width: 30px; height: 30px;
+                        border-radius: 8px;
+                        background: var(--primary-bg);
+                        color: var(--primary);
+                        display: flex; align-items: center; justify-content: center;
+                        flex-shrink: 0;
+                    }
+                    .addr-name { font-weight: 600; color: var(--gray-800); }
+                    .addr-meta { font-size: 0.78rem; color: var(--gray-500); }
+                    .switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 40px;
+                        height: 22px;
+                        vertical-align: middle;
+                    }
+                    .switch input { opacity: 0; width: 0; height: 0; }
+                    .switch-slider {
+                        position: absolute;
+                        inset: 0;
+                        background: var(--gray-300);
+                        border-radius: 22px;
+                        transition: .2s;
+                        cursor: pointer;
+                    }
+                    .switch-slider:before {
+                        content: '';
+                        position: absolute;
+                        width: 16px;
+                        height: 16px;
+                        left: 3px;
+                        top: 3px;
+                        background: var(--white);
+                        border-radius: 50%;
+                        transition: .2s;
+                        box-shadow: var(--shadow);
+                    }
+                    .switch input:checked + .switch-slider { background: var(--success); }
+                    .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Clientes</h1>
+                        <p class="text-muted text-sm mb-0" id="customers-count">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-tools">
+                        <input type="text" class="form-control tool-input" id="customer-search" placeholder="Buscar por nombre, email o teléfono...">
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Pedidos</th>
+                                <th>Total Comprado</th>
+                                <th>Registro</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- CUSTOMER PROFILE MODAL -->
+                <div class="modal-overlay" id="customer-modal" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
+                    <div class="modal modal-lg">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="customer-modal-title">Perfil del Cliente</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('customer-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="profile-header">
+                                <div class="avatar-lg" id="customer-avatar">A</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="font-semibold" id="customer-profile-name" style="font-size:1.1rem;"></div>
+                                    <div class="text-sm text-muted" id="customer-profile-email"></div>
+                                    <div class="mt-1" id="customer-profile-badges"></div>
+                                </div>
+                            </div>
+
+                            <div class="stats-grid">
+                                <div class="mini-stat">
+                                    <div class="val" id="customer-stat-orders">—</div>
+                                    <div class="lbl">Pedidos</div>
+                                </div>
+                                <div class="mini-stat">
+                                    <div class="val" id="customer-stat-total">—</div>
+                                    <div class="lbl">Total Comprado</div>
+                                </div>
+                                <div class="mini-stat">
+                                    <div class="val" id="customer-stat-addresses">—</div>
+                                    <div class="lbl">Direcciones</div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <div class="detail-section-title">Información de Contacto</div>
+                                <div id="customer-contact-info"></div>
+                            </div>
+
+                            <div class="detail-section">
+                                <div class="detail-section-title">Direcciones</div>
+                                <ul class="addr-list" id="customer-addresses"></ul>
+                            </div>
+
+                            <div class="detail-section" style="margin-bottom:0;">
+                                <div class="detail-section-title">Pedidos Recientes</div>
+                                <div class="table-wrapper table-shrink">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Pedido</th>
+                                                <th>Fecha</th>
+                                                <th>Total</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="customer-orders-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-danger" id="customer-delete-btn" onclick="deleteCustomer(currentCustomerId)">Eliminar</button>
+                            <button type="button" class="btn btn-primary" id="customer-toggle-btn" onclick="toggleCustomer(currentCustomerId)">Desactivar</button>
+                            <button type="button" class="btn btn-ghost" onclick="Modal.hide('customer-modal')">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var currentCustomerId = null;
+
+        function esc(s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function customerStats(id) {
+            var orders = DB.getOrders().filter(function(o) { return o.customerId === id; });
+            var total = 0;
+            var activeCount = 0;
+            orders.forEach(function(o) {
+                if (o.status !== 'cancelled') {
+                    total += (o.total || 0);
+                    activeCount++;
+                }
+            });
+            return { count: orders.length, activeCount: activeCount, total: total };
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function renderCustomers() {
+            var customers = DB.getCustomers();
+            var q = getVal('customer-search').toLowerCase();
+
+            var list = customers.filter(function(c) {
+                if (!q) return true;
+                return c.name.toLowerCase().indexOf(q) !== -1 ||
+                    (c.email || '').toLowerCase().indexOf(q) !== -1 ||
+                    (c.phone || '').toLowerCase().indexOf(q) !== -1;
+            });
+
+            list = list.slice().sort(function(a, b) {
+                return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+            });
+
+            setText('customers-count', list.length + ' cliente' + (list.length === 1 ? '' : 's') + ' encontrado' + (list.length === 1 ? '' : 's'));
+
+            var tbody = document.getElementById('customers-tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = emptyRow(7, '👥', 'Sin clientes', 'No se encontraron clientes con los filtros actuales.');
+                return;
+            }
+
+            tbody.innerHTML = list.map(function(c) {
+                var st = customerStats(c.id);
+                return '<tr>' +
+                    '<td><div class="flex" style="align-items:center;gap:12px;">' +
+                    '<div style="width:38px;height:38px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">' + esc((c.name || '?')[0].toUpperCase()) + '</div>' +
+                    '<div><div class="font-semibold">' + esc(c.name) + '</div>' +
+                    '<div class="text-xs text-muted">' + esc(c.email) + '</div></div></div></td>' +
+                    '<td>' + esc(c.phone || '—') + '</td>' +
+                    '<td><span class="badge badge-primary">' + st.count + '</span></td>' +
+                    '<td class="font-semibold">' + formatPrice(st.activeCount > 0 ? st.total : 0) + '</td>' +
+                    '<td>' + formatDate(c.createdAt) + '</td>' +
+                    '<td><span class="badge ' + (c.active ? 'badge-success' : 'badge-gray') + '">' + (c.active ? 'Activo' : 'Inactivo') + '</span></td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-sm" onclick="openCustomerModal(\'' + c.id + '\')">👁 Ver</button>' +
+                    '<label class="switch" title="' + (c.active ? 'Desactivar cliente' : 'Activar cliente') + '">' +
+                    '<input type="checkbox" ' + (c.active ? 'checked' : '') + ' onchange="toggleCustomer(\'' + c.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteCustomer(\'' + c.id + '\')" title="Eliminar cliente">🗑</button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+
+        function openCustomerModal(id) {
+            var c = DB.getCustomer(id);
+            if (!c) return;
+            currentCustomerId = id;
+            renderCustomerDetails(c);
+            Modal.show('customer-modal');
+        }
+
+        function renderCustomerDetails(c) {
+            var st = customerStats(c.id);
+            setText('customer-modal-title', 'Perfil del Cliente');
+            setText('customer-avatar', (c.name || '?')[0].toUpperCase());
+            setText('customer-profile-name', c.name);
+            setText('customer-profile-email', c.email);
+
+            var badges = '<span class="badge ' + (c.active ? 'badge-success' : 'badge-gray') + '">' + (c.active ? 'Activo' : 'Inactivo') + '</span>' +
+                ' <span class="badge badge-primary">Desde ' + formatDate(c.createdAt) + '</span>';
+            document.getElementById('customer-profile-badges').innerHTML = badges;
+
+            setText('customer-stat-orders', st.count);
+            setText('customer-stat-total', formatPrice(st.total));
+            setText('customer-stat-addresses', (c.addresses || []).length);
+
+            var contact =
+                '<ul class="info-list" style="list-style:none;margin:0;padding:0;">' +
+                '<li class="flex" style="justify-content:space-between;padding:6px 0;font-size:0.85rem;border-bottom:1px solid var(--gray-100);"><span class="text-muted">Teléfono</span><span class="font-semibold">' + esc(c.phone || '—') + '</span></li>' +
+                '<li class="flex" style="justify-content:space-between;padding:6px 0;font-size:0.85rem;border-bottom:1px solid var(--gray-100);"><span class="text-muted">WhatsApp</span><span class="font-semibold">' + esc(c.whatsapp || '—') + '</span></li>' +
+                '<li class="flex" style="justify-content:space-between;padding:6px 0;font-size:0.85rem;border-bottom:1px solid var(--gray-100);"><span class="text-muted">Email</span><span class="font-semibold">' + esc(c.email) + '</span></li>' +
+                '</ul>';
+            document.getElementById('customer-contact-info').innerHTML = contact;
+
+            var addrEl = document.getElementById('customer-addresses');
+            var addrs = c.addresses || [];
+            if (addrs.length === 0) {
+                addrEl.innerHTML = '<li class="addr-item" style="border:none;"><span class="text-muted" style="font-style:italic;">Sin direcciones registradas.</span></li>';
+            } else {
+                addrEl.innerHTML = addrs.map(function(a) {
+                    return '<li class="addr-item">' +
+                        '<div class="addr-icon">📍</div>' +
+                        '<div style="flex:1;min-width:0;">' +
+                        '<div class="addr-name">' + esc(a.name || 'Dirección') + (a.default ? ' <span class="badge badge-accent" style="font-size:0.62rem;margin-left:4px;">Principal</span>' : '') + '</div>' +
+                        '<div class="addr-meta">' + esc(a.address || '') + '</div>' +
+                        '<div class="addr-meta">' + esc(a.city || '') + (a.department ? ', ' + esc(a.department) : '') + '</div>' +
+                        (a.reference ? '<div class="addr-meta">Ref: ' + esc(a.reference) + '</div>' : '') +
+                        '</div></li>';
+                }).join('');
+            }
+
+            var orders = DB.getOrders().filter(function(o) { return o.customerId === c.id; })
+                .sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+            var ordersTbody = document.getElementById('customer-orders-tbody');
+            if (orders.length === 0) {
+                ordersTbody.innerHTML = emptyRow(4, '📦', 'Sin pedidos', 'Este cliente aún no ha realizado compras.');
+            } else {
+                ordersTbody.innerHTML = orders.map(function(o) {
+                    return '<tr>' +
+                        '<td><span class="font-semibold">#' + esc(o.id.toUpperCase()) + '</span></td>' +
+                        '<td>' + formatDate(o.createdAt) + '</td>' +
+                        '<td class="font-semibold">' + formatPrice(o.total) + '</td>' +
+                        '<td><span class="badge ' + getStatusBadgeClass(o.status) + '">' + getStatusLabel(o.status) + '</span></td></tr>';
+                }).join('');
+            }
+
+            var toggleBtn = document.getElementById('customer-toggle-btn');
+            toggleBtn.textContent = c.active ? 'Desactivar' : 'Activar Cuenta';
+            toggleBtn.className = c.active ? 'btn btn-outline-danger' : 'btn btn-primary';
+        }
+
+        function applyToggle(id, active) {
+            var customers = DB.getCustomers();
+            var c = customers.find(function(x) { return x.id === id; });
+            if (!c) return;
+            c.active = active;
+            DB.setCustomers(customers);
+            Toast.show(active ? 'Cliente activado' : 'Cliente desactivado', active ? 'success' : 'warning');
+            renderCustomers();
+            if (currentCustomerId === id) renderCustomerDetails(c);
+        }
+
+        function toggleCustomer(id, el) {
+            var customers = DB.getCustomers();
+            var c = customers.find(function(x) { return x.id === id; });
+            if (!c) return;
+            var target = el ? el.checked : !c.active;
+            if (!target) {
+                Modal.confirm('¿Desactivar la cuenta de ' + c.name + '? No podrá iniciar sesión ni realizar compras.', function() {
+                    applyToggle(id, false);
+                });
+            } else {
+                applyToggle(id, true);
+            }
+            renderCustomers();
+        }
+
+        function deleteCustomer(id) {
+            var c = DB.getCustomer(id);
+            if (!c) return;
+            Modal.confirm('¿Eliminar al cliente "' + c.name + '" y todos sus pedidos? Esta acción no se puede deshacer.', function() {
+                DB.setCustomers(DB.getCustomers().filter(function(x) { return x.id !== id; }));
+                DB.setOrders(DB.getOrders().filter(function(o) { return o.customerId !== id; }));
+                Toast.show('Cliente eliminado', 'success');
+                if (currentCustomerId === id) Modal.hide('customer-modal');
+                currentCustomerId = null;
+                renderCustomers();
+            });
+        }
+
+        initAdminPage('Clientes');
+        if (AdminAuth.isLoggedIn()) {
+            renderCustomers();
+            document.getElementById('customer-search').addEventListener('input', renderCustomers);
+        }
+    </script>
+</body>
+</html>

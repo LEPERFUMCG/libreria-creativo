@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Finaliza tu pedido en LIBRERIA CREATIVO. Completa tus datos de contacto, elige método de entrega y de pago.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Finalizar Compra - LIBRERIA CREATIVO</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); }
+    .page-subtitle { color: var(--gray-500); font-size: 0.85rem; margin-top: 2px; }
+
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .checkout-panel {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      min-width: 0;
+    }
+    .checkout-section {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .checkout-section:last-of-type { border-bottom: none; }
+    .checkout-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--gray-800);
+    }
+    .checkout-section-title i { width: 18px; height: 18px; color: var(--primary); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0 16px;
+    }
+    @media (min-width: 640px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Option cards (delivery / payment radios) */
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+    .option-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--white);
+    }
+    .option-card:hover { border-color: var(--primary-light); }
+    .option-card:has(input:checked) {
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+    .option-card input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .option-card-title { font-weight: 600; font-size: 0.9rem; color: var(--gray-800); }
+    .option-card-desc { font-size: 0.8rem; color: var(--gray-500); margin-top: 2px; }
+
+    .checkout-submit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      font-size: 1rem;
+      border-radius: var(--radius);
+    }
+
+    /* Sidebar summary */
+    .checkout-summary {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      position: sticky;
+      top: 96px;
+    }
+    .checkout-summary h3 { margin-bottom: 14px; }
+    .summary-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--gray-100);
+      padding-bottom: 12px;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.875rem;
+    }
+    .summary-item-info { min-width: 0; }
+    .summary-item-title { font-weight: 600; color: var(--gray-800); }
+    .summary-item-meta { display: block; font-size: 0.78rem; color: var(--gray-500); }
+    .summary-item-price { font-weight: 700; color: var(--gray-800); flex-shrink: 0; }
+    .shipping-note { font-size: 0.75rem; color: var(--gray-500); margin-top: 2px; }
+
+    /* Success modal */
+    .success-check {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--success-bg);
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .success-check i { width: 34px; height: 34px; }
+    .success-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
+    .order-number {
+      display: inline-block;
+      margin: 16px auto;
+      padding: 10px 20px;
+      border: 2px dashed var(--primary);
+      border-radius: var(--radius);
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    @media (min-width: 1024px) {
+      .checkout-layout { grid-template-columns: 1fr 360px; }
+      .checkout-panel { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="mobile-nav" class="mobile-nav"></div>
+
+  <header class="site-header">
+    <div id="header-top" class="header-top"></div>
+    <div id="header-main" class="header-main"></div>
+  </header>
+
+  <main class="section" style="padding-top: 20px;">
+    <div class="container">
+      <div class="page-toolbar">
+        <div>
+          <h1 class="page-title">Finalizar Compra</h1>
+          <p class="page-subtitle" id="toolbar-summary-count"></p>
+        </div>
+        <a href="cart.html" class="btn btn-ghost">
+          <i class="lucide-arrow-left" style="width:16px;height:16px;"></i> Volver al Carrito
+        </a>
+      </div>
+
+      <div class="checkout-layout">
+        <div class="checkout-panel">
+          <form id="checkout-form" novalidate onsubmit="handleSubmit(event)">
+            <div class="checkout-section">
+              <h2 class="checkout-section-title"><i class="lucide-user"></i> Datos Personales</h2>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label" for="checkout-name">Nombre completo *</label>
+                  <input type="text" class="form-control" id="checkout-name" placeholder="Ej: Ana Martínez" autocomplete="name">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="checkout-phone">Teléfono *</label>
+                  <input type="tel" class="form-control" id="checkout-phone" placeholder="Ej: 9988-1122" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="checkout-whatsapp">WhatsApp *</label>
+                  <input type="tel" class="form-control" id="checkout-whatsapp" placeholder="Ej: 9988-1122" autocomplete="tel-national">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="checkout-email">Correo electrónico *</label>
+                  <input type="email" class="form-control" id="checkout-email" placeholder="ejemplo@correo.com" autocomplete="email">
+                </div>
+              </div>
+            </div>
+
+            <div class="checkout-section" id="delivery-address-section">
+              <h2 class="checkout-section-title"><i class="lucide-map-pin"></i> Dirección de Envío</h2>
+              <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label" for="checkout-address">Dirección *</label>
+                  <input type="text" class="form-control" id="checkout-address" placeholder="Colonia, calle y número">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="checkout-city">Ciudad *</label>
+                  <input type="text" class="form-control" id="checkout-city" placeholder="Ej: Tegucigalpa">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="checkout-department">Departamento *</label>
+                  <select class="form-control" id="checkout-department">
+                    <option value="">Selecciona tu departamento</option>
+                  </select>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label" for="checkout-reference">Referencia de dirección</label>
+                  <input type="text" class="form-control" id="checkout-reference" placeholder="Ej: Frente a la pulpería, casa blanca de portón verde">
+                  <p class="form-hint">Opcional, ayúdanos a encontrar tu casa más fácil.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="checkout-section">
+              <h2 class="checkout-section-title"><i class="lucide-truck"></i> Método de Entrega</h2>
+              <div class="options-list" id="delivery-options"></div>
+            </div>
+
+            <div class="checkout-section">
+              <h2 class="checkout-section-title"><i class="lucide-credit-card"></i> Método de Pago</h2>
+              <div class="options-list" id="payment-options"></div>
+            </div>
+
+            <div class="checkout-section">
+              <h2 class="checkout-section-title"><i class="lucide-sticky-note"></i> Notas del Pedido</h2>
+              <textarea class="form-control" id="checkout-notes" placeholder="Instrucciones especiales para tu pedido (opcional)"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block checkout-submit-btn" id="checkout-submit-btn">
+              <i class="lucide-check-circle" style="width:18px;height:18px;"></i>
+              Realizar Pedido
+            </button>
+          </form>
+        </div>
+
+        <aside class="checkout-summary" aria-label="Resumen del pedido">
+          <h3>Resumen del Pedido</h3>
+          <div class="summary-items" id="checkout-summary-items"></div>
+          <div class="cart-summary-row"><span>Subtotal</span><span id="checkout-summary-subtotal"></span></div>
+          <div class="cart-summary-row"><span>Envío</span><span id="checkout-summary-shipping"></span></div>
+          <div class="cart-summary-row total"><span>Total</span><span id="checkout-summary-total"></span></div>
+          <p class="shipping-note" id="checkout-shipping-note"></p>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <a href="cart.html" class="cart-float btn btn-primary" id="cart-float" aria-label="Ver carrito">
+    <i class="lucide-shopping-cart" style="width:18px;height:18px;"></i>
+    <span class="count-badge cart-count" style="position:static;margin-left:8px;">0</span>
+  </a>
+
+  <div class="modal-overlay" id="checkout-success-modal" role="dialog" aria-modal="true" aria-label="Pedido realizado">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-body" style="text-align:center;padding:32px 24px;">
+        <div class="success-check"><i class="lucide-check"></i></div>
+        <h2 class="success-title">¡Pedido Realizado!</h2>
+        <p class="text-muted" style="font-size:0.9rem;">Tu pedido ha sido registrado con éxito.<br>Guarda tu número de pedido:</p>
+        <div class="order-number" id="success-order-number">ORD-0000</div>
+        <p class="text-muted text-xs">Te contactaremos para confirmar la entrega. Mientras tanto puedes seguir tus pedidos en tu cuenta.</p>
+        <div class="modal-footer" style="justify-content:center;">
+          <a href="orders.html" class="btn btn-primary">Ver Mis Pedidos</a>
+          <a href="catalog.html" class="btn btn-ghost">Seguir Comprando</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script>
+    initPublicPage();
+
+    const config = DB.getConfig();
+    document.title = `Finalizar Compra - ${config.storeName}`;
+
+    // Guard - redirect to cart if empty
+    if (Cart.getItems().length === 0) {
+      window.location.replace('cart.html');
+    }
+
+    const DEPARTMENTS = [
+      'Atlántida', 'Choluteca', 'Colón', 'Comayagua', 'Copán', 'Cortés',
+      'El Paraíso', 'Francisco Morazán', 'Gracias a Dios', 'Intibucá',
+      'Islas de la Bahía', 'La Paz', 'Lempira', 'Ocotepeque', 'Olancho',
+      'Santa Bárbara', 'Valle', 'Yoro'
+    ];
+
+    const customer = Auth.getCustomer();
+
+    function renderOptions(containerId, list, name, firstId) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = list.map((m, i) => `
+        <label class="option-card">
+          <input type="radio" name="${name}" value="${m.id}" ${i === 0 || m.id === firstId ? 'checked' : ''} ${name === 'delivery' ? 'onchange="handleDeliveryChange()"' : ''}>
+          <div class="option-card-body">
+            <div class="option-card-title">${m.name}</div>
+            ${m.description ? `<div class="option-card-desc">${m.description}</div>` : ''}
+          </div>
+        </label>`).join('');
+    }
+
+    function populateDepartments() {
+      const select = document.getElementById('checkout-department');
+      if (!select) return;
+      select.innerHTML = '<option value="">Selecciona tu departamento</option>' +
+        DEPARTMENTS.map(d => `<option value="${d}">${d}</option>`).join('');
+    }
+
+    function prefillCustomerData() {
+      if (!customer) return;
+      document.getElementById('checkout-name').value = customer.name || '';
+      document.getElementById('checkout-phone').value = customer.phone || '';
+      document.getElementById('checkout-whatsapp').value = customer.whatsapp || '';
+      document.getElementById('checkout-email').value = customer.email || '';
+
+      const addresses = customer.addresses || [];
+      const def = addresses.find(a => a.default) || addresses[0];
+      if (def) {
+        document.getElementById('checkout-address').value = def.address || '';
+        document.getElementById('checkout-city').value = def.city || '';
+        document.getElementById('checkout-department').value = def.department || '';
+        document.getElementById('checkout-reference').value = def.reference || '';
+      }
+    }
+
+    function renderSummary() {
+      const items = Cart.getItems();
+      const subtotal = Cart.getSubtotal();
+      const shipping = subtotal >= config.freeShippingMin ? 0 : (config.shippingCost || 50);
+      const total = subtotal + shipping;
+
+      document.getElementById('toolbar-summary-count').textContent =
+        items.length === 1 ? '1 ítem' : `${Cart.getCount()} ítems`;
+
+      document.getElementById('checkout-summary-items').innerHTML = items.map(item => {
+        const book = DB.getBook(item.bookId);
+        if (!book) return '';
+        const author = DB.getAuthor(book.authorId);
+        return `
+          <div class="summary-item">
+            <div class="summary-item-info">
+              <span class="summary-item-title">${book.title}</span>
+              ${author ? `<span class="summary-item-meta">${author.name} · Cantidad: ${item.quantity}</span>` : `<span class="summary-item-meta">Cantidad: ${item.quantity}</span>`}
+            </div>
+            <span class="summary-item-price">${formatPrice(item.price * item.quantity, config)}</span>
+          </div>`;
+      }).join('');
+
+      document.getElementById('checkout-summary-subtotal').textContent = formatPrice(subtotal, config);
+      document.getElementById('checkout-summary-shipping').innerHTML =
+        shipping === 0 ? '<span class="text-success">Gratis</span>' : formatPrice(shipping, config);
+      document.getElementById('checkout-summary-total').textContent = formatPrice(total, config);
+
+      const note = document.getElementById('checkout-shipping-note');
+      if (note) {
+        note.textContent = shipping > 0
+          ? `El envío es gratis en compras mayores a ${formatPrice(config.freeShippingMin, config)}`
+          : '';
+      }
+    }
+
+    function handleDeliveryChange() {
+      const checked = document.querySelector('input[name="delivery"]:checked');
+      if (!checked) return;
+      const method = DB.getDeliveryMethods().find(m => m.id === checked.value);
+      const needsAddress = !method || /env[ií]o|domicilio/i.test(method.name);
+      const section = document.getElementById('delivery-address-section');
+      if (section) section.style.display = needsAddress ? '' : 'none';
+    }
+
+    function validate(data) {
+      const errors = [];
+      if (!data.name.trim()) errors.push('Ingresa tu nombre completo');
+      if (!data.phone.trim()) errors.push('Ingresa tu teléfono');
+      if (!data.whatsapp.trim()) errors.push('Ingresa tu número de WhatsApp');
+      if (!data.email.trim()) errors.push('Ingresa tu correo electrónico');
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) errors.push('Ingresa un correo electrónico válido');
+
+      const deliveryInput = document.querySelector('input[name="delivery"]:checked');
+      const paymentInput = document.querySelector('input[name="payment"]:checked');
+      if (!deliveryInput) errors.push('Selecciona un método de entrega');
+      if (!paymentInput) errors.push('Selecciona un método de pago');
+
+      const method = deliveryInput && DB.getDeliveryMethods().find(m => m.id === deliveryInput.value);
+      const needsAddress = !method || /env[ií]o|domicilio/i.test(method.name);
+      if (needsAddress) {
+        if (!data.address.trim()) errors.push('Ingresa tu dirección');
+        if (!data.city.trim()) errors.push('Ingresa tu ciudad');
+        if (!data.department) errors.push('Selecciona tu departamento');
+      }
+      return errors;
+    }
+
+    function getField(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+
+      const deliveryInput = document.querySelector('input[name="delivery"]:checked');
+      const paymentInput = document.querySelector('input[name="payment"]:checked');
+
+      const formData = {
+        name: getField('checkout-name'),
+        phone: getField('checkout-phone'),
+        whatsapp: getField('checkout-whatsapp'),
+        email: getField('checkout-email'),
+        address: getField('checkout-address'),
+        city: getField('checkout-city'),
+        department: getField('checkout-department'),
+        reference: getField('checkout-reference'),
+        deliveryMethod: deliveryInput ? deliveryInput.value : '',
+        paymentMethod: paymentInput ? paymentInput.value : '',
+        notes: getField('checkout-notes')
+      };
+
+      const errors = validate(formData);
+      if (errors.length > 0) {
+        Toast.show(errors[0], 'error');
+        return;
+      }
+
+      const btn = document.getElementById('checkout-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;"></span> Procesando...';
+
+      const order = processCheckout(formData);
+
+      if (!order) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="lucide-check-circle" style="width:18px;height:18px;"></i> Realizar Pedido';
+        Toast.show('No se pudo procesar el pedido. Intenta de nuevo.', 'error');
+        return;
+      }
+
+      document.getElementById('success-order-number').textContent = order.id.toUpperCase();
+      Modal.show('checkout-success-modal');
+      Cart.updateBadge();
+
+      setTimeout(() => {
+        window.location.replace('orders.html');
+      }, 4500);
+    }
+
+    populateDepartments();
+    prefillCustomerData();
+    renderOptions('delivery-options', DB.getDeliveryMethods().filter(m => m.active), 'delivery', 'dm1');
+    renderOptions('payment-options', DB.getPaymentMethods().filter(m => m.active), 'payment');
+    handleDeliveryChange();
+    renderSummary();
+  </script>
+</body>
+</html>

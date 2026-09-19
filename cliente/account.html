@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Administra tu perfil, direcciones de envío y pedidos en LIBRERIA CREATIVO.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Mi Cuenta - LIBRERIA CREATIVO</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); }
+    .page-subtitle { color: var(--gray-500); font-size: 0.85rem; margin-top: 2px; }
+
+    button.account-nav-item {
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: none;
+      cursor: pointer;
+    }
+
+    /* Addresses */
+    .addresses-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .address-list { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 640px) { .address-list { grid-template-columns: 1fr 1fr; } }
+    .address-card {
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      background: var(--white);
+      transition: var(--transition);
+    }
+    .address-card:hover { border-color: var(--gray-300); }
+    .address-card.default { border-color: var(--primary); background: var(--primary-bg); }
+    .address-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .address-card-name { font-weight: 700; font-size: 0.95rem; color: var(--gray-900); }
+    .address-card-text { font-size: 0.85rem; color: var(--gray-600); line-height: 1.5; }
+    .address-card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .address-card-actions .btn { border-radius: var(--radius-full); }
+
+    .profile-avatar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .profile-avatar-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .profile-avatar-name { font-weight: 700; color: var(--gray-900); }
+    .profile-avatar-email { font-size: 0.85rem; color: var(--gray-500); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="mobile-nav" class="mobile-nav"></div>
+
+  <header class="site-header">
+    <div id="header-top" class="header-top"></div>
+    <div id="header-main" class="header-main"></div>
+  </header>
+
+  <main class="section" style="padding-top: 20px;">
+    <div class="container">
+      <div class="page-toolbar">
+        <div>
+          <h1 class="page-title">Mi Cuenta</h1>
+          <p class="page-subtitle">Administra tu información personal, direcciones y pedidos.</p>
+        </div>
+      </div>
+
+      <div class="account-layout">
+        <aside class="account-sidebar" aria-label="Navegación de cuenta">
+          <a href="javascript:void(0)" class="account-nav-item active" data-tab="profile" onclick="switchTab('profile')">
+            <i class="lucide-user"></i> Mi Perfil
+          </a>
+          <a href="javascript:void(0)" class="account-nav-item" data-tab="addresses" onclick="switchTab('addresses')">
+            <i class="lucide-map-pin"></i> Direcciones
+          </a>
+          <a href="orders.html" class="account-nav-item">
+            <i class="lucide-package"></i> Mis Pedidos
+          </a>
+          <a href="favorites.html" class="account-nav-item">
+            <i class="lucide-heart"></i> Favoritos
+          </a>
+          <button class="account-nav-item" onclick="Auth.logout()" style="color:var(--danger);">
+            <i class="lucide-log-out"></i> Cerrar Sesión
+          </button>
+        </aside>
+
+        <div class="account-content">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile')">Mi Perfil</button>
+            <button class="tab-btn" data-tab="addresses" onclick="switchTab('addresses')">Direcciones</button>
+          </div>
+
+          <!-- PROFILE TAB -->
+          <div class="tab-content" id="tab-profile">
+            <div class="profile-avatar">
+              <div class="profile-avatar-circle" id="profile-initial"></div>
+              <div>
+                <div class="profile-avatar-name" id="profile-display-name"></div>
+                <div class="profile-avatar-email" id="profile-display-email"></div>
+              </div>
+            </div>
+
+            <form id="profile-form" onsubmit="saveProfile(event)">
+              <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label" for="profile-name">Nombre completo *</label>
+                  <input type="text" class="form-control" id="profile-name" placeholder="Tu nombre completo">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label class="form-label" for="profile-email">Correo electrónico *</label>
+                  <input type="email" class="form-control" id="profile-email" placeholder="ejemplo@correo.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profile-phone">Teléfono</label>
+                  <input type="tel" class="form-control" id="profile-phone" placeholder="Ej: 9988-1122" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profile-whatsapp">WhatsApp</label>
+                  <input type="tel" class="form-control" id="profile-whatsapp" placeholder="Ej: 9988-1122" autocomplete="tel-national">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary mt-4">
+                <i class="lucide-save" style="width:16px;height:16px;"></i> Guardar Cambios
+              </button>
+            </form>
+          </div>
+
+          <!-- ADDRESSES TAB -->
+          <div class="tab-content hidden" id="tab-addresses">
+            <div class="addresses-header">
+              <div>
+                <h2 class="section-title" style="font-size:1.1rem;">Mis Direcciones</h2>
+                <p class="page-subtitle">Agrega y administra las direcciones para tus envíos.</p>
+              </div>
+              <button class="btn btn-primary" onclick="openAddressModal()">
+                <i class="lucide-plus" style="width:16px;height:16px;"></i> Agregar Dirección
+              </button>
+            </div>
+            <div class="address-list" id="address-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ADDRESS MODAL -->
+  <div class="modal-overlay" id="address-modal" role="dialog" aria-modal="true" aria-label="Administrar dirección">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="address-modal-title">Nueva Dirección</h3>
+        <button class="modal-close" onclick="Modal.hide('address-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="address-form" onsubmit="saveAddress(event)">
+          <div class="form-group">
+            <label class="form-label" for="addr-name">Nombre de la dirección *</label>
+            <input type="text" class="form-control" id="addr-name" placeholder="Ej: Casa, Oficina, Casa de mis padres">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addr-address">Dirección *</label>
+            <input type="text" class="form-control" id="addr-address" placeholder="Colonia, calle y número">
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="addr-city">Ciudad *</label>
+              <input type="text" class="form-control" id="addr-city" placeholder="Ej: Tegucigalpa">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="addr-department">Departamento *</label>
+              <select class="form-control" id="addr-department">
+                <option value="">Selecciona</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addr-reference">Referencia de dirección</label>
+            <input type="text" class="form-control" id="addr-reference" placeholder="Ej: Frente a la pulpería, casa blanca">
+          </div>
+          <label class="form-check" style="margin-bottom:16px;">
+            <input type="checkbox" id="addr-default">
+            <span>Establecer como dirección predeterminada</span>
+          </label>
+          <div class="modal-footer" style="padding:0;">
+            <button type="button" class="btn btn-ghost" onclick="Modal.hide('address-modal')">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="address-save-btn">Guardar Dirección</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script>
+    initPublicPage();
+
+    if (!Auth.isLoggedIn()) {
+      window.location.replace('login.html');
+    } else {
+      initAccountPage();
+    }
+
+    function initAccountPage() {
+      const config = DB.getConfig();
+      document.title = `Mi Cuenta - ${config.storeName}`;
+
+      populateDepartmentSelect();
+      loadProfile();
+      renderAddresses();
+
+      if (window.location.hash === '#addresses') {
+        switchTab('addresses');
+      }
+    }
+
+    const DEPARTMENTS = [
+      'Atlántida', 'Choluteca', 'Colón', 'Comayagua', 'Copán', 'Cortés',
+      'El Paraíso', 'Francisco Morazán', 'Gracias a Dios', 'Intibucá',
+      'Islas de la Bahía', 'La Paz', 'Lempira', 'Ocotepeque', 'Olancho',
+      'Santa Bárbara', 'Valle', 'Yoro'
+    ];
+
+    function populateDepartmentSelect() {
+      const select = document.getElementById('addr-department');
+      if (!select) return;
+      select.innerHTML = '<option value="">Selecciona</option>' +
+        DEPARTMENTS.map(d => `<option value="${d}">${d}</option>`).join('');
+    }
+
+    function currentCustomer() {
+      return Auth.getCustomer();
+    }
+
+    function saveCustomer(customer) {
+      const customers = DB.getCustomers();
+      const idx = customers.findIndex(c => c.id === customer.id);
+      if (idx !== -1) {
+        customers[idx] = customer;
+        DB.setCustomers(customers);
+      }
+      localStorage.setItem('bookstore_currentCustomer', JSON.stringify(customer));
+    }
+
+    // ---- TAB NAVIGATION ----
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      document.querySelectorAll('.account-nav-item').forEach(item => {
+        if (item.dataset.tab) item.classList.toggle('active', item.dataset.tab === tab);
+      });
+      document.getElementById('tab-profile').classList.toggle('hidden', tab !== 'profile');
+      document.getElementById('tab-addresses').classList.toggle('hidden', tab !== 'addresses');
+    }
+
+    // ---- PROFILE ----
+    function loadProfile() {
+      const customer = currentCustomer();
+      if (!customer) return;
+      document.getElementById('profile-name').value = customer.name || '';
+      document.getElementById('profile-email').value = customer.email || '';
+      document.getElementById('profile-phone').value = customer.phone || '';
+      document.getElementById('profile-whatsapp').value = customer.whatsapp || '';
+
+      const initial = (customer.name || '?').trim()[0].toUpperCase();
+      document.getElementById('profile-initial').textContent = initial;
+      document.getElementById('profile-display-name').textContent = customer.name || 'Cliente';
+      document.getElementById('profile-display-email').textContent = customer.email || '';
+    }
+
+    function saveProfile(event) {
+      event.preventDefault();
+      const name = document.getElementById('profile-name').value.trim();
+      const email = document.getElementById('profile-email').value.trim();
+      const phone = document.getElementById('profile-phone').value.trim();
+      const whatsapp = document.getElementById('profile-whatsapp').value.trim();
+
+      if (!name) {
+        Toast.show('Ingresa tu nombre completo', 'error');
+        return;
+      }
+      if (!email) {
+        Toast.show('Ingresa tu correo electrónico', 'error');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        Toast.show('Ingresa un correo electrónico válido', 'error');
+        return;
+      }
+
+      const ok = Auth.updateProfile({ name, email, phone, whatsapp });
+      if (ok) {
+        loadProfile();
+        setTimeout(() => renderHeader(DB.getConfig()), 0);
+        Toast.show('Perfil actualizado correctamente', 'success');
+      } else {
+        Toast.show('No se pudo actualizar tu perfil', 'error');
+      }
+    }
+
+    // ---- ADDRESSES ----
+    let editingAddressId = null;
+
+    function renderAddresses() {
+      const customer = currentCustomer();
+      const el = document.getElementById('address-list');
+      if (!customer || !el) return;
+      const addresses = customer.addresses || [];
+
+      if (addresses.length === 0) {
+        el.innerHTML = `
+          <div class="empty-state" style="box-shadow:none;border:2px dashed var(--gray-200);grid-column:1 / -1;">
+            <div class="empty-state-icon">🏠</div>
+            <h3 class="empty-state-title">Sin direcciones guardadas</h3>
+            <p class="empty-state-text">Agrega una dirección para agilizar tus próximos pedidos.</p>
+            <button class="btn btn-primary" onclick="openAddressModal()">Agregar Dirección</button>
+          </div>`;
+        return;
+      }
+
+      el.innerHTML = addresses.map(addr => `
+        <div class="address-card ${addr.default ? 'default' : ''}">
+          <div class="address-card-top">
+            <span class="address-card-name">${addr.name || 'Dirección'}</span>
+            ${addr.default ? '<span class="badge badge-primary">Predeterminada</span>' : ''}
+          </div>
+          <p class="address-card-text">${addr.address}, ${addr.city}, ${addr.department}</p>
+          ${addr.reference ? `<p class="address-card-text" style="color:var(--gray-500);">Ref: ${addr.reference}</p>` : ''}
+          <div class="address-card-actions">
+            ${addr.default ? '' : `<button class="btn btn-ghost btn-sm" onclick="setDefaultAddress('${addr.id}')"><i class="lucide-star" style="width:14px;height:14px;"></i> Predeterminada</button>`}
+            <button class="btn btn-ghost btn-sm" onclick="openAddressModal('${addr.id}')"><i class="lucide-pencil" style="width:14px;height:14px;"></i> Editar</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deleteAddress('${addr.id}')"><i class="lucide-trash-2" style="width:14px;height:14px;"></i> Eliminar</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function openAddressModal(id) {
+      const customer = currentCustomer();
+      if (!customer) return;
+      const addr = id ? (customer.addresses || []).find(a => a.id === id) : null;
+      editingAddressId = id || null;
+
+      populateDepartmentSelect();
+      document.getElementById('addr-name').value = addr ? (addr.name || '') : '';
+      document.getElementById('addr-address').value = addr ? (addr.address || '') : '';
+      document.getElementById('addr-city').value = addr ? (addr.city || '') : '';
+      document.getElementById('addr-department').value = addr ? (addr.department || '') : '';
+      document.getElementById('addr-reference').value = addr ? (addr.reference || '') : '';
+      document.getElementById('addr-default').checked = addr ? !!addr.default : false;
+
+      document.getElementById('address-modal-title').textContent = addr ? 'Editar Dirección' : 'Nueva Dirección';
+      document.getElementById('address-save-btn').textContent = addr ? 'Guardar Cambios' : 'Guardar Dirección';
+      Modal.show('address-modal');
+    }
+
+    function saveAddress(event) {
+      event.preventDefault();
+      const customer = currentCustomer();
+      if (!customer) return;
+
+      const name = document.getElementById('addr-name').value.trim();
+      const address = document.getElementById('addr-address').value.trim();
+      const city = document.getElementById('addr-city').value.trim();
+      const department = document.getElementById('addr-department').value;
+      const reference = document.getElementById('addr-reference').value.trim();
+      const isDefault = document.getElementById('addr-default').checked;
+
+      if (!name) { Toast.show('Ingresa un nombre para la dirección', 'error'); return; }
+      if (!address) { Toast.show('Ingresa la dirección', 'error'); return; }
+      if (!city) { Toast.show('Ingresa la ciudad', 'error'); return; }
+      if (!department) { Toast.show('Selecciona el departamento', 'error'); return; }
+
+      if (!customer.addresses) customer.addresses = [];
+
+      if (editingAddressId) {
+        const addr = customer.addresses.find(a => a.id === editingAddressId);
+        if (addr) {
+          Object.assign(addr, { name, address, city, department, reference });
+          if (isDefault) customer.addresses.forEach(a => { a.default = a.id === editingAddressId; });
+          else if (customer.addresses.length === 1) addr.default = true;
+        }
+      } else {
+        const newAddr = {
+          id: DB.generateId('addr'),
+          name, address, city, department, reference,
+          default: customer.addresses.length === 0 || isDefault
+        };
+        if (newAddr.default) customer.addresses.forEach(a => { a.default = false; });
+        customer.addresses.push(newAddr);
+      }
+
+      const wasEditing = !!editingAddressId;
+      saveCustomer(customer);
+      editingAddressId = null;
+      Modal.hide('address-modal');
+      renderAddresses();
+      Toast.show(wasEditing ? 'Dirección actualizada' : 'Dirección agregada', 'success');
+    }
+
+    function setDefaultAddress(id) {
+      const customer = currentCustomer();
+      if (!customer) return;
+      customer.addresses.forEach(a => { a.default = a.id === id; });
+      saveCustomer(customer);
+      renderAddresses();
+      Toast.show('Dirección predeterminada actualizada', 'success');
+    }
+
+    function deleteAddress(id) {
+      Modal.confirm('¿Seguro que deseas eliminar esta dirección?', () => {
+        const customer = currentCustomer();
+        if (!customer) return;
+        customer.addresses = (customer.addresses || []).filter(a => a.id !== id);
+        if (customer.addresses.length > 0 && !customer.addresses.some(a => a.default)) {
+          customer.addresses[0].default = true;
+        }
+        saveCustomer(customer);
+        renderAddresses();
+        Toast.show('Dirección eliminada', 'success');
+      });
+    }
+  </script>
+</body>
+</html>

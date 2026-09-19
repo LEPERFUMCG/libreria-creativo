@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Favoritos</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div id="mobile-nav" class="mobile-nav"></div>
+    <header class="site-header">
+        <div id="header-top" class="header-top"></div>
+        <div id="header-main" class="header-main"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Mis Favoritos</h1>
+            </div>
+            <div id="favorites-grid" class="book-grid"></div>
+            <div id="favorites-empty" class="empty-state" style="display:none;">
+                <div class="empty-state-icon">
+                    <i class="lucide-heart"></i>
+                </div>
+                <h3>No tienes favoritos ainda</h3>
+                <p>Marca tus libros favoritos y encontraras todos aqui.</p>
+                <a href="../index.html" class="btn btn-primary">Explorar Libros</a>
+            </div>
+        </div>
+    </main>
+
+    <footer id="site-footer" class="site-footer"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initPublicPage();
+            loadFavorites();
+        });
+
+        function loadFavorites() {
+            const favoriteIds = getFavorites();
+            const books = DB.getBooks();
+            const favorites = books.filter(b => favoriteIds.includes(b.id));
+            const gridEl = document.getElementById('favorites-grid');
+            const emptyEl = document.getElementById('favorites-empty');
+
+            if (favorites.length === 0) {
+                emptyEl.style.display = 'block';
+                gridEl.innerHTML = '';
+                return;
+            }
+
+            gridEl.innerHTML = favorites.map(book => renderBookCard(book, DB.getConfig())).join('');
+        }
+    </script>
+</body>
+</html>

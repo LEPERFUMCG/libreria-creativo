@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Revisa los libros en tu carrito de LIBRERIA CREATIVO, ajusta cantidades y procede a finalizar tu pedido.">
+  <meta name="robots" content="noindex, follow">
+  <title>Mi Carrito - LIBRERIA CREATIVO</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <style>
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); }
+    .page-subtitle { color: var(--gray-500); font-size: 0.85rem; margin-top: 2px; }
+
+    .cart-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .cart-list {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      padding: 8px 16px;
+      min-width: 0;
+    }
+
+    /* Mobile bottom toolbar */
+    .cart-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-lg);
+      padding: 10px 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      z-index: 45;
+    }
+    .cart-bottom-label { font-size: 0.75rem; color: var(--gray-500); }
+    .cart-bottom-total { font-weight: 800; font-size: 1.15rem; color: var(--gray-900); }
+    .cart-bottom-btn { border-radius: var(--radius-full); }
+
+    @media (min-width: 1024px) {
+      .cart-layout { grid-template-columns: 1fr 340px; }
+    }
+    @media (max-width: 639px) {
+      body { padding-bottom: 74px; }
+      .cart-bottom-bar { display: flex; }
+      .cart-float { bottom: 86px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="mobile-nav" class="mobile-nav"></div>
+
+  <header class="site-header">
+    <div id="header-top" class="header-top"></div>
+    <div id="header-main" class="header-main"></div>
+  </header>
+
+  <main class="section" style="padding-top: 20px;">
+    <div class="container">
+      <div class="page-toolbar">
+        <div>
+          <h1 class="page-title">Mi Carrito</h1>
+          <p class="page-subtitle" id="toolbar-cart-count">Carrito vacío</p>
+        </div>
+        <a href="catalog.html" class="btn btn-ghost">
+          <i class="lucide-arrow-left" style="width:16px;height:16px;"></i> Continuar Comprando
+        </a>
+      </div>
+
+      <div class="cart-layout">
+        <div class="cart-list" id="cart-items"></div>
+        <aside class="cart-summary" id="cart-summary" aria-label="Resumen del pedido"></aside>
+      </div>
+    </div>
+  </main>
+
+  <div class="cart-bottom-bar" id="cart-bottom-bar" role="toolbar">
+    <div>
+      <div class="cart-bottom-label">Total con envío</div>
+      <div class="cart-bottom-total" id="bottom-total">L.0.00</div>
+    </div>
+    <a href="checkout.html" class="btn btn-primary cart-bottom-btn">
+      <i class="lucide-arrow-right" style="width:16px;height:16px;"></i> Proceder al Pedido
+    </a>
+  </div>
+
+  <a href="checkout.html" class="cart-float btn btn-primary" id="cart-float" aria-label="Finalizar compra">
+    <i class="lucide-shopping-cart" style="width:18px;height:18px;"></i>
+    <span class="count-badge cart-count" style="position:static;margin-left:8px;">0</span>
+  </a>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script>
+    initPublicPage();
+
+    const config = DB.getConfig();
+    document.title = `Mi Carrito - ${config.storeName}`;
+
+    function syncPageChrome() {
+      const items = Cart.getItems();
+      const count = Cart.getCount();
+      const subtotal = Cart.getSubtotal();
+      const shipping = subtotal >= config.freeShippingMin ? 0 : (config.shippingCost || 50);
+      const total = subtotal + shipping;
+
+      const toolbarCount = document.getElementById('toolbar-cart-count');
+      if (toolbarCount) {
+        toolbarCount.textContent = count === 0
+          ? 'Carrito vacío'
+          : count === 1 ? '1 ítem' : `${count} ítems`;
+      }
+
+      const summary = document.getElementById('cart-summary');
+      if (summary) {
+        if (items.length === 0) {
+          summary.style.display = 'none';
+          summary.innerHTML = '';
+        } else {
+          summary.style.display = '';
+        }
+      }
+
+      const bottomBar = document.getElementById('cart-bottom-bar');
+      if (bottomBar) {
+        if (items.length === 0) {
+          bottomBar.style.display = 'none';
+        } else {
+          bottomBar.style.display = '';
+          const label = document.getElementById('bottom-total');
+          if (label) label.textContent = `${config.currency}${total.toFixed(2)}`;
+        }
+      }
+
+      const floatBtn = document.getElementById('cart-float');
+      if (floatBtn) floatBtn.style.display = items.length === 0 ? 'none' : '';
+    }
+
+    const originalUpdateCartPage = Cart.updateCartPage.bind(Cart);
+    const originalUpdateSummary = Cart.updateSummary.bind(Cart);
+
+    Cart.updateCartPage = function () {
+      originalUpdateCartPage();
+      syncPageChrome();
+    };
+
+    Cart.updateSummary = function () {
+      originalUpdateSummary();
+      syncPageChrome();
+    };
+
+    // Loads items with Cart.getItems(), renders them (with quantity controls and
+    // remove buttons) into #cart-items and updates the #cart-summary sidebar.
+    Cart.updateCartPage();
+  </script>
+</body>
+</html>

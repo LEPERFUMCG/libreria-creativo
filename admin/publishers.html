@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editoriales</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .admin-toolbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        margin-bottom: 16px;
+                    }
+                    .admin-tools {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        flex: 1;
+                    }
+                    .tool-input { min-width: 260px; flex: 1; }
+                    .pub-logo {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 10px;
+                        background: var(--gray-100);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 800;
+                        color: var(--primary);
+                        flex-shrink: 0;
+                        overflow: hidden;
+                        font-size: 1.1rem;
+                    }
+                    .pub-logo img { width: 100%; height: 100%; object-fit: cover; }
+                    .pub-logo-lg {
+                        width: 76px;
+                        height: 76px;
+                        border-radius: 16px;
+                        background: var(--gray-100);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 800;
+                        color: var(--primary);
+                        flex-shrink: 0;
+                        overflow: hidden;
+                        font-size: 1.6rem;
+                    }
+                    .pub-logo-lg img { width: 100%; height: 100%; object-fit: cover; }
+                    .cover-thumb {
+                        width: 36px;
+                        height: 50px;
+                        border-radius: 5px;
+                        object-fit: cover;
+                        background: var(--gray-100);
+                        flex-shrink: 0;
+                        display: block;
+                    }
+                    .cover-ph {
+                        width: 36px;
+                        height: 50px;
+                        border-radius: 5px;
+                        background: var(--primary-bg);
+                        color: var(--primary);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.9rem;
+                        flex-shrink: 0;
+                    }
+                    .drop-zone {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    .drop-preview {
+                        width: 64px;
+                        height: 64px;
+                        border-radius: 12px;
+                        background: var(--gray-100);
+                        border: 1px dashed var(--gray-300);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5rem;
+                        color: var(--gray-400);
+                        overflow: hidden;
+                        flex-shrink: 0;
+                    }
+                    .drop-preview img { width: 100%; height: 100%; object-fit: cover; }
+                    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; }
+                    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+                    .form-grid .form-group { margin-bottom: 14px; }
+                    .switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 40px;
+                        height: 22px;
+                        vertical-align: middle;
+                    }
+                    .switch input { opacity: 0; width: 0; height: 0; }
+                    .switch-slider {
+                        position: absolute;
+                        inset: 0;
+                        background: var(--gray-300);
+                        border-radius: 22px;
+                        transition: .2s;
+                        cursor: pointer;
+                    }
+                    .switch-slider:before {
+                        content: '';
+                        position: absolute;
+                        width: 16px;
+                        height: 16px;
+                        left: 3px;
+                        top: 3px;
+                        background: var(--white);
+                        border-radius: 50%;
+                        transition: .2s;
+                        box-shadow: var(--shadow);
+                    }
+                    .switch input:checked + .switch-slider { background: var(--success); }
+                    .switch input:checked + .switch-slider:before { transform: translateX(18px); }
+                    .detail-section {
+                        background: var(--gray-50);
+                        border: 1px solid var(--gray-200);
+                        border-radius: var(--radius-md);
+                        padding: 14px 16px;
+                        margin-bottom: 16px;
+                    }
+                    .detail-section-title {
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: var(--gray-500);
+                        margin-bottom: 10px;
+                    }
+                    .profile-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                        padding-bottom: 16px;
+                        border-bottom: 1px solid var(--gray-200);
+                        margin-bottom: 16px;
+                        flex-wrap: wrap;
+                    }
+                    .profile-header-name { font-size: 1.15rem; font-weight: 700; color: var(--gray-900); }
+                    .table-shrink { box-shadow: none; border-radius: 6px; }
+                    .info-truncate {
+                        max-width: 300px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        color: var(--gray-500);
+                        font-size: 0.83rem;
+                    }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Editoriales</h1>
+                        <p class="text-muted text-sm mb-0" id="publishers-count">Cargando...</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="openPublisherModal()">＋ Nueva Editorial</button>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-tools">
+                        <input type="text" class="form-control tool-input" id="publisher-search" placeholder="Buscar por nombre o información...">
+                        <select class="form-control" id="publisher-status-filter" style="min-width:170px;width:auto;">
+                            <option value="all">Todos los estados</option>
+                            <option value="active">Solo activas</option>
+                            <option value="inactive">Solo inactivas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Logo</th>
+                                <th>Nombre</th>
+                                <th>Información</th>
+                                <th>Libros</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="publishers-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- PUBLISHER FORM MODAL -->
+                <div class="modal-overlay" id="publisher-modal" role="dialog" aria-modal="true" aria-labelledby="publisher-modal-title">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="publisher-modal-title">Nueva Editorial</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('publisher-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="publisher-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="publisher-logo-file">Logo de la editorial</label>
+                                    <div class="drop-zone">
+                                        <div class="drop-preview" id="publisher-logo-preview"><span>🏢</span></div>
+                                        <div style="flex:1;">
+                                            <input type="file" class="form-control" id="publisher-logo-file" accept="image/*">
+                                            <div class="form-hint">Selecciona una imagen desde tu dispositivo (JPG o PNG).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="publisher-name">Nombre *</label>
+                                    <input type="text" class="form-control" id="publisher-name" placeholder="Nombre de la editorial" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="publisher-info">Información</label>
+                                    <textarea class="form-control" id="publisher-info" rows="4" placeholder="Descripción o datos de la editorial"></textarea>
+                                </div>
+                                <div class="form-group" style="margin-bottom:16px;">
+                                    <label class="form-check" style="justify-content:flex-start;">
+                                        <input type="checkbox" id="publisher-active" checked>
+                                        <span>Activa</span>
+                                    </label>
+                                </div>
+                                <div class="modal-footer" style="padding:0;">
+                                    <button type="button" class="btn btn-ghost" onclick="Modal.hide('publisher-modal')">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary" id="publisher-save-btn">Guardar Editorial</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUBLISHER VIEW MODAL -->
+                <div class="modal-overlay" id="publisher-view-modal" role="dialog" aria-modal="true" aria-labelledby="publisher-view-title">
+                    <div class="modal modal-lg" style="max-width:720px;">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="publisher-view-title">Información de la Editorial</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('publisher-view-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="profile-header">
+                                <div class="pub-logo-lg" id="publisher-view-logo">🏢</div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="profile-header-name" id="publisher-view-name"></div>
+                                    <div class="text-sm text-muted" id="publisher-view-meta"></div>
+                                    <div class="mt-1" id="publisher-view-badges"></div>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-section-title">Información</div>
+                                <div class="text-sm" id="publisher-view-info" style="color:var(--gray-600);white-space:pre-line;"></div>
+                            </div>
+                            <div class="detail-section" style="margin-bottom:0;">
+                                <div class="detail-section-title">Libros de la Editorial (<span id="publisher-view-books-count">0</span>)</div>
+                                <div class="table-wrapper table-shrink">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Título</th>
+                                                <th>Autor</th>
+                                                <th>Precio</th>
+                                                <th>Stock</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="publisher-view-books-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="publisher-view-edit-btn" onclick="openPublisherModal(currentViewPublisherId)">✎ Editar</button>
+                            <button type="button" class="btn btn-ghost" onclick="Modal.hide('publisher-view-modal')">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var editingPublisherId = null;
+        var currentViewPublisherId = null;
+        var pendingPublisherLogo = '';
+
+        function esc(s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setVal(id, v) {
+            var el = document.getElementById(id);
+            if (el) el.value = (v === null || v === undefined) ? '' : v;
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function pubLogoHTML(p, cls) {
+            if (p.logo) return '<div class="' + cls + '"><img src="' + p.logo + '" alt="' + esc(p.name) + '"></div>';
+            return '<div class="' + cls + '">' + esc((p.name || '?')[0].toUpperCase()) + '</div>';
+        }
+
+        function publisherBooks(p) {
+            return DB.getBooks().filter(function(b) { return b.publisherId === p.id; });
+        }
+
+        function renderPublishers() {
+            var publishers = DB.getPublishers();
+            var q = getVal('publisher-search').toLowerCase();
+            var f = document.getElementById('publisher-status-filter').value;
+
+            var list = publishers.filter(function(p) {
+                if (f === 'active' && !p.active) return false;
+                if (f === 'inactive' && p.active) return false;
+                if (!q) return true;
+                return p.name.toLowerCase().indexOf(q) !== -1 ||
+                    (p.info || '').toLowerCase().indexOf(q) !== -1;
+            });
+            list = list.slice().sort(function(a, b) {
+                return String(a.name).localeCompare(String(b.name));
+            });
+
+            setText('publishers-count', list.length + ' editorial' + (list.length === 1 ? '' : 'es') + ' encontrada' + (list.length === 1 ? '' : 's'));
+
+            var tbody = document.getElementById('publishers-tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = emptyRow(6, '🏢', 'Sin editoriales', 'No se encontraron editoriales con los filtros actuales.');
+                return;
+            }
+
+            tbody.innerHTML = list.map(function(p) {
+                var count = publisherBooks(p).length;
+                return '<tr>' +
+                    '<td>' + pubLogoHTML(p, 'pub-logo') + '</td>' +
+                    '<td><div class="font-semibold">' + esc(p.name) + '</div></td>' +
+                    '<td><div class="info-truncate">' + esc(p.info || '—') + '</div></td>' +
+                    '<td><span class="badge badge-primary">' + count + '</span></td>' +
+                    '<td>' +
+                    '<span class="badge ' + (p.active ? 'badge-success' : 'badge-gray') + '" style="display:inline-block;margin-bottom:6px;">' + (p.active ? 'Activa' : 'Inactiva') + '</span>' +
+                    '<label class="switch" title="' + (p.active ? 'Desactivar editorial' : 'Activar editorial') + '">' +
+                    '<input type="checkbox" ' + (p.active ? 'checked' : '') + ' onchange="togglePublisherActive(\'' + p.id + '\', this)">' +
+                    '<span class="switch-slider"></span></label>' +
+                    '</td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="viewPublisher(\'' + p.id + '\')" title="Ver editorial">👁</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" onclick="openPublisherModal(\'' + p.id + '\')" title="Editar">✎</button>' +
+                    '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deletePublisher(\'' + p.id + '\')" title="Eliminar">🗑</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function openPublisherModal(id) {
+            editingPublisherId = id || null;
+            pendingPublisherLogo = '';
+            document.getElementById('publisher-form').reset();
+            document.getElementById('publisher-logo-preview').innerHTML = '<span>🏢</span>';
+            document.getElementById('publisher-modal-title').textContent = 'Nueva Editorial';
+            document.getElementById('publisher-save-btn').textContent = 'Guardar Editorial';
+            if (id) {
+                var p = DB.getPublisher(id);
+                if (!p) return;
+                document.getElementById('publisher-modal-title').textContent = 'Editar Editorial';
+                document.getElementById('publisher-save-btn').textContent = 'Actualizar Editorial';
+                setVal('publisher-name', p.name);
+                setVal('publisher-info', p.info);
+                document.getElementById('publisher-active').checked = !!p.active;
+                if (p.logo) {
+                    document.getElementById('publisher-logo-preview').innerHTML = '<img src="' + p.logo + '" alt="Logo">';
+                }
+            } else {
+                document.getElementById('publisher-active').checked = true;
+            }
+            Modal.show('publisher-modal');
+            if (currentViewPublisherId) Modal.hide('publisher-view-modal');
+            setTimeout(function() { document.getElementById('publisher-name').focus(); }, 100);
+        }
+
+        function handlePublisherLogoUpload(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Toast.show('Selecciona una imagen válida', 'error');
+                e.target.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                pendingPublisherLogo = ev.target.result;
+                document.getElementById('publisher-logo-preview').innerHTML = '<img src="' + pendingPublisherLogo + '" alt="Logo">';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function savePublisher(e) {
+            e.preventDefault();
+            var name = getVal('publisher-name');
+            if (!name) {
+                Toast.show('El nombre de la editorial es obligatorio', 'error');
+                return;
+            }
+            var data = {
+                name: name,
+                info: getVal('publisher-info'),
+                active: document.getElementById('publisher-active').checked
+            };
+
+            var publishers = DB.getPublishers();
+            if (editingPublisherId) {
+                var idx = publishers.findIndex(function(x) { return x.id === editingPublisherId; });
+                if (idx === -1) return;
+                var prev = publishers[idx];
+                data.logo = pendingPublisherLogo || prev.logo || '';
+                publishers[idx] = Object.assign({}, prev, data);
+                Toast.show('Editorial actualizada', 'success');
+            } else {
+                data.id = DB.generateId('pub');
+                data.logo = pendingPublisherLogo || '';
+                publishers.push(data);
+                Toast.show('Editorial creada correctamente', 'success');
+            }
+            DB.setPublishers(publishers);
+            pendingPublisherLogo = '';
+            Modal.hide('publisher-modal');
+            renderPublishers();
+        }
+
+        function togglePublisherActive(id, el) {
+            var publishers = DB.getPublishers();
+            var p = publishers.find(function(x) { return x.id === id; });
+            if (!p) return;
+            p.active = el.checked;
+            DB.setPublishers(publishers);
+            Toast.show(p.active ? 'Editorial activada' : 'Editorial desactivada', p.active ? 'success' : 'warning');
+            renderPublishers();
+        }
+
+        function deletePublisher(id) {
+            var p = DB.getPublisher(id);
+            if (!p) return;
+            var count = publisherBooks(p).length;
+            Modal.confirm('¿Eliminar la editorial "' + p.name + '"? ' + (count > 0 ? 'Los ' + count + ' libro' + (count === 1 ? '' : 's') + ' asociado' + (count === 1 ? '' : 's') + ' quedar' + (count === 1 ? 'á' : 'án') + ' sin editorial.' : 'Esta acción no se puede deshacer.'), function() {
+                DB.setPublishers(DB.getPublishers().filter(function(x) { return x.id !== id; }));
+                var books = DB.getBooks();
+                var changed = false;
+                books.forEach(function(b) {
+                    if (b.publisherId === id) { b.publisherId = ''; changed = true; }
+                });
+                if (changed) DB.setBooks(books);
+                Toast.show('Editorial eliminada', 'success');
+                if (editingPublisherId === id) Modal.hide('publisher-modal');
+                if (currentViewPublisherId === id) Modal.hide('publisher-view-modal');
+                renderPublishers();
+            });
+        }
+
+        function viewPublisher(id) {
+            var p = DB.getPublisher(id);
+            if (!p) return;
+            currentViewPublisherId = id;
+
+            document.getElementById('publisher-view-logo').innerHTML = p.logo
+                ? '<img src="' + p.logo + '" alt="' + esc(p.name) + '">'
+                : esc((p.name || '?')[0].toUpperCase());
+            setText('publisher-view-name', p.name);
+            setText('publisher-view-meta', publisherBooks(p).length + ' libro' + (publisherBooks(p).length === 1 ? '' : 's'));
+            document.getElementById('publisher-view-badges').innerHTML =
+                '<span class="badge ' + (p.active ? 'badge-success' : 'badge-gray') + '">' + (p.active ? 'Activa' : 'Inactiva') + '</span>';
+
+            var info = p.info || 'Sin información registrada.';
+            setText('publisher-view-info', info);
+            setText('publisher-view-books-count', publisherBooks(p).length);
+
+            var books = publisherBooks(p).sort(function(x, y) {
+                return String(y.createdAt || '').localeCompare(String(x.createdAt || ''));
+            });
+            var tbody = document.getElementById('publisher-view-books-tbody');
+            if (books.length === 0) {
+                tbody.innerHTML = emptyRow(5, '📚', 'Sin libros', 'Esta editorial aún no tiene libros en el catálogo.');
+            } else {
+                tbody.innerHTML = books.map(function(b) {
+                    var author = DB.getAuthor(b.authorId);
+                    var stockBadge = b.stock <= 0 ? 'badge-gray' : (b.stock < 15 ? 'badge-warning' : 'badge-success');
+                    return '<tr>' +
+                        '<td>' + (b.cover ? '<img class="cover-thumb" src="' + b.cover + '" alt="">' : '<div class="cover-ph">📖</div>') + '</td>' +
+                        '<td>' +
+                        '<div class="font-semibold">' + esc(b.title) + '</div>' +
+                        '<div class="text-xs text-muted">' + esc(b.sku || '') + '</div>' +
+                        '</td>' +
+                        '<td>' + (author ? esc(author.name) : '—') + '</td>' +
+                        '<td class="font-semibold">' + formatPrice(b.promoPrice > 0 ? b.promoPrice : b.price) + '</td>' +
+                        '<td><span class="badge ' + stockBadge + '">' + b.stock + '</span></td>' +
+                        '</tr>';
+                }).join('');
+            }
+            Modal.show('publisher-view-modal');
+        }
+
+        initAdminPage('Editoriales');
+        if (AdminAuth.isLoggedIn()) {
+            renderPublishers();
+            document.getElementById('publisher-search').addEventListener('input', renderPublishers);
+            document.getElementById('publisher-status-filter').addEventListener('change', renderPublishers);
+            document.getElementById('publisher-form').addEventListener('submit', savePublisher);
+            document.getElementById('publisher-logo-file').addEventListener('change', handlePublisherLogoUpload);
+        }
+    </script>
+</body>
+</html>

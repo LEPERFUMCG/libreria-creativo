@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesion</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card card">
+            <div class="auth-card-body">
+                <div class="auth-logo" id="auth-logo"></div>
+                <h2 class="auth-title">Iniciar Sesion</h2>
+                <p class="auth-subtitle">Ingresa tus credenciales para acceder a tu cuenta</p>
+
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <div class="input-icon">
+                            <i class="lucide-mail"></i>
+                            <input type="email" id="login-email" class="form-control" placeholder="tu@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Contrasena</label>
+                        <div class="input-icon">
+                            <i class="lucide-lock"></i>
+                            <input type="password" id="login-password" class="form-control" placeholder="Tu contrasena" required>
+                        </div>
+                    </div>
+                    <div class="form-row form-row-between">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="remember-me">
+                            <span>Recordarme</span>
+                        </label>
+                        <a href="forgot-password.html" class="form-link">Olvidaste tu contrasena?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" id="login-btn">
+                        <i class="lucide-log-in"></i> Iniciar Sesion
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>No tienes cuenta? <a href="register.html" class="form-link">Registrate aqui</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer id="site-footer" class="site-footer" style="display:none;"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const config = DB.getConfig();
+            const logoEl = document.getElementById('auth-logo');
+
+            if (config.logo) {
+                logoEl.innerHTML = `<img src="${config.logo}" alt="${config.storeName || 'Libreria'}" class="auth-logo-img">`;
+            } else {
+                logoEl.innerHTML = `<span class="auth-logo-text">${config.storeName || 'Libreria'}</span>`;
+            }
+
+            const redirect = new URLSearchParams(window.location.search).get('redirect');
+
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleLogin(redirect);
+            });
+        });
+
+        function handleLogin(redirect) {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const remember = document.getElementById('remember-me').checked;
+            const btn = document.getElementById('login-btn');
+
+            if (!email || !password) {
+                Toast.show('Por favor completa todos los campos.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;"></span> Ingresando...';
+
+            const result = Auth.login(email, password);
+
+            setTimeout(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="lucide-log-in"></i> Iniciar Sesión';
+
+                if (result.success) {
+                    if (remember) {
+                        localStorage.setItem('rememberedEmail', email);
+                    } else {
+                        localStorage.removeItem('rememberedEmail');
+                    }
+                    Toast.show('Bienvenido de vuelta!', 'success');
+                    window.location.href = redirect || 'account.html';
+                } else {
+                    Toast.show(result.message || 'Credenciales incorrectas.', 'error');
+                }
+            }, 800);
+        }
+
+        (function() {
+            const remembered = localStorage.getItem('rememberedEmail');
+            if (remembered) {
+                const emailInput = document.getElementById('login-email');
+                if (emailInput) {
+                    emailInput.value = remembered;
+                    document.getElementById('remember-me').checked = true;
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

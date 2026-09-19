@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes | Admin</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <style>
+        .stat-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        @media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+        .period-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .period-tab { padding: 9px 18px; border-radius: var(--radius-full); border: 1px solid var(--gray-200); background: var(--white); font-size: 0.85rem; font-weight: 600; color: var(--gray-600); cursor: pointer; transition: var(--transition); }
+        .period-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .period-tab.active { background: var(--primary); border-color: var(--primary); color: var(--white); }
+        .custom-range { display: none; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+        .custom-range .form-group { margin-bottom: 0; }
+        .report-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .stat-note { font-size: 0.8rem; color: var(--gray-500); }
+        .report-table-card { margin-top: 24px; }
+        .report-table-card .card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Reportes</h1>
+                        <p class="text-muted text-sm mb-0" id="period-range-text">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:20px;margin-bottom:24px;">
+                    <div class="form-label">Período</div>
+                    <div class="period-tabs" id="period-tabs">
+                        <button type="button" class="period-tab active" data-period="today">Hoy</button>
+                        <button type="button" class="period-tab" data-period="week">Esta Semana</button>
+                        <button type="button" class="period-tab" data-period="month">Este Mes</button>
+                        <button type="button" class="period-tab" data-period="year">Este Año</button>
+                        <button type="button" class="period-tab" data-period="custom">Rango Personalizado</button>
+                    </div>
+                    <div class="custom-range" id="custom-range">
+                        <div class="form-group">
+                            <label class="form-label">Desde</label>
+                            <input type="date" class="form-control" id="custom-from">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hasta</label>
+                            <input type="date" class="form-control" id="custom-to">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="applyReports()">Aplicar</button>
+                    </div>
+                    <div class="stat-note" id="period-note"></div>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">💰</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-sales">—</div>
+                            <div class="stat-label">Ventas Totales</div>
+                            <div class="stat-change up">Suma de todos los pedidos</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">📋</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-orders">—</div>
+                            <div class="stat-label">Pedidos</div>
+                            <div class="stat-change up">Pedidos en el período</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon yellow">📦</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-units">—</div>
+                            <div class="stat-label">Unidades Vendidas</div>
+                            <div class="stat-change up">Artículos en los pedidos</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">📈</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-net">—</div>
+                            <div class="stat-label">Ingresos Netos</div>
+                            <div class="stat-change up">Ventas sin costos de envío</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red">🏷️</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-discounts">—</div>
+                            <div class="stat-label">Descuentos</div>
+                            <div class="stat-change down">Aplicados en el período</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon teal">🚚</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="stat-shipping">—</div>
+                            <div class="stat-label">Costos de Envío</div>
+                            <div class="stat-change up">Cobrados a los clientes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Ventas por Día en el Período</div>
+                    <div class="card-body">
+                        <div id="report-chart"></div>
+                    </div>
+                </div>
+
+                <div class="card report-table-card">
+                    <div class="card-header">
+                        <span>Productos Más Vendidos <span class="badge badge-primary" id="top-count">0</span></span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="exportTopCSV()">⬇ Exportar CSV</button>
+                    </div>
+                    <div class="table-wrapper" style="box-shadow:none;border-radius:0;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Unidades</th>
+                                    <th>Ingresos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card report-table-card">
+                    <div class="card-header">
+                        <span>Ventas por Categoría <span class="badge badge-primary" id="cat-count">0</span></span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="exportCatCSV()">⬇ Exportar CSV</button>
+                    </div>
+                    <div class="table-wrapper" style="box-shadow:none;border-radius:0;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Unidades</th>
+                                    <th>Ingresos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cat-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card report-table-card" style="margin-bottom:32px;">
+                    <div class="card-header">
+                        <span>Pedidos del Período <span class="badge badge-primary" id="ord-count">0</span></span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="exportOrdersCSV()">⬇ Exportar CSV</button>
+                    </div>
+                    <div class="table-wrapper" style="box-shadow:none;border-radius:0;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Unidades</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ord-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var currentPeriod = 'today';
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function refNow() {
+            var orders = DB.getOrders();
+            var ref = null;
+            orders.forEach(function(o) {
+                var d = new Date(o.createdAt);
+                if (!ref || d.getTime() > ref.getTime()) ref = d;
+            });
+            return ref || new Date();
+        }
+
+        function startOfDay(d) {
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        function endOfDay(d) {
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        }
+
+        function addDays(d, n) {
+            var r = new Date(d);
+            r.setDate(r.getDate() + n);
+            return r;
+        }
+
+        function startOfWeek(d) {
+            var r = new Date(d);
+            var day = r.getDay();
+            var diff = day === 0 ? 6 : day - 1; // Monday start
+            r.setDate(r.getDate() - diff);
+            r.setHours(0, 0, 0, 0);
+            return r;
+        }
+
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+        function dateKey(d) {
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        }
+
+        function getPeriod() {
+            var now = refNow();
+            var start, end;
+            if (currentPeriod === 'today') {
+                start = startOfDay(now);
+                end = endOfDay(now);
+            } else if (currentPeriod === 'week') {
+                start = startOfWeek(now);
+                end = endOfDay(now);
+            } else if (currentPeriod === 'month') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = endOfDay(now);
+            } else if (currentPeriod === 'year') {
+                start = new Date(now.getFullYear(), 0, 1);
+                end = endOfDay(now);
+            } else {
+                var fromVal = document.getElementById('custom-from').value;
+                var toVal = document.getElementById('custom-to').value;
+                if (!fromVal || !toVal) { Toast.show('Selecciona el rango de fechas', 'error'); return null; }
+                start = startOfDay(new Date(fromVal));
+                end = endOfDay(new Date(toVal));
+            }
+            return { start: start, end: end };
+        }
+
+        function filterOrdersByPeriod(period) {
+            return DB.getOrders().filter(function(o) {
+                var d = new Date(o.createdAt).getTime();
+                return d >= period.start.getTime() && d <= period.end.getTime();
+            });
+        }
+
+        function fmtRange(p) {
+            return 'Del ' + p.start.toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }) +
+                ' al ' + p.end.toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        function orderUnits(o) {
+            return o.items.reduce(function(s, it) { return s + it.quantity; }, 0);
+        }
+
+        function renderStats(orders) {
+            var sales = orders.reduce(function(s, o) { return s + (o.total || 0); }, 0);
+            var shipping = orders.reduce(function(s, o) { return s + (o.shipping || 0); }, 0);
+            var discounts = orders.reduce(function(s, o) { return s + (o.discount || 0); }, 0);
+            var units = orders.reduce(function(s, o) { return s + orderUnits(o); }, 0);
+            setText('stat-sales', formatPrice(sales));
+            setText('stat-orders', orders.length);
+            setText('stat-units', units);
+            setText('stat-net', formatPrice(sales - shipping));
+            setText('stat-discounts', formatPrice(discounts));
+            setText('stat-shipping', formatPrice(shipping));
+        }
+
+        function buildChartSeries(orders, period) {
+            var totalByDay = {};
+            orders.forEach(function(o) {
+                var k = dateKey(new Date(o.createdAt));
+                totalByDay[k] = (totalByDay[k] || 0) + (o.total || 0);
+            });
+            var totalDays = Math.round((period.end.getTime() - period.start.getTime()) / 86400000) + 1;
+
+            if (totalDays > 62) {
+                var totalByMonth = {};
+                orders.forEach(function(o) {
+                    var d = new Date(o.createdAt);
+                    var k = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+                    totalByMonth[k] = (totalByMonth[k] || 0) + (o.total || 0);
+                });
+                var labels = [], values = [];
+                var cursor = new Date(period.start.getFullYear(), period.start.getMonth(), 1);
+                while (cursor <= period.end) {
+                    var mk = cursor.getFullYear() + '-' + pad(cursor.getMonth() + 1);
+                    labels.push(cursor.getMonth() + 1 + '/' + String(cursor.getFullYear()).slice(2));
+                    values.push(totalByMonth[mk] || 0);
+                    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+                }
+                return { labels: labels, values: values };
+            }
+
+            var labels = [], values = [];
+            for (var i = 0; i < totalDays; i++) {
+                var d = addDays(startOfDay(period.start), i);
+                var k = dateKey(d);
+                labels.push(d.getDate() + '/' + (d.getMonth() + 1));
+                values.push(totalByDay[k] || 0);
+            }
+            return { labels: labels, values: values };
+        }
+
+        function renderTopProducts(orders) {
+            var map = {};
+            orders.forEach(function(o) {
+                o.items.forEach(function(it) {
+                    if (!map[it.bookId]) map[it.bookId] = { qty: 0, revenue: 0 };
+                    map[it.bookId].qty += it.quantity;
+                    map[it.bookId].revenue += it.quantity * it.price;
+                });
+            });
+            var rows = Object.keys(map).map(function(id) {
+                return { id: id, qty: map[id].qty, revenue: map[id].revenue };
+            }).sort(function(a, b) { return b.qty - a.qty; });
+            setText('top-count', rows.length + ' producto' + (rows.length === 1 ? '' : 's'));
+            var tbody = document.getElementById('top-tbody');
+            if (rows.length === 0) {
+                tbody.innerHTML = emptyRow(3, '🏆', 'Sin ventas', 'No hubo productos vendidos en el período.');
+                return;
+            }
+            tbody.innerHTML = rows.map(function(r) {
+                var b = DB.getBook(r.id);
+                var au = b ? DB.getAuthor(b.authorId) : null;
+                return '<tr>' +
+                    '<td><div class="font-semibold">' + (b ? b.title : 'Producto eliminado') + '</div>' +
+                    '<div class="text-xs text-muted">' + (au ? au.name : '') + '</div></td>' +
+                    '<td><span class="badge badge-primary">' + r.qty + '</span></td>' +
+                    '<td class="font-semibold">' + formatPrice(r.revenue) + '</td></tr>';
+            }).join('');
+        }
+
+        function renderByCategory(orders) {
+            var map = {};
+            orders.forEach(function(o) {
+                o.items.forEach(function(it) {
+                    var b = DB.getBook(it.bookId);
+                    var cat = b ? DB.getCategory(b.categoryId) : null;
+                    var key = cat ? cat.name : 'Sin categoría';
+                    if (!map[key]) map[key] = { qty: 0, revenue: 0 };
+                    map[key].qty += it.quantity;
+                    map[key].revenue += it.quantity * it.price;
+                });
+            });
+            var rows = Object.keys(map).map(function(k) {
+                return { name: k, qty: map[k].qty, revenue: map[k].revenue };
+            }).sort(function(a, b) { return b.revenue - a.revenue; });
+            setText('cat-count', rows.length + ' categoría' + (rows.length === 1 ? '' : 's'));
+            var tbody = document.getElementById('cat-tbody');
+            if (rows.length === 0) {
+                tbody.innerHTML = emptyRow(3, '🏷️', 'Sin ventas', 'No hubo ventas por categoría en el período.');
+                return;
+            }
+            tbody.innerHTML = rows.map(function(r) {
+                return '<tr>' +
+                    '<td class="font-semibold">' + r.name + '</td>' +
+                    '<td><span class="badge badge-primary">' + r.qty + '</span></td>' +
+                    '<td class="font-semibold">' + formatPrice(r.revenue) + '</td></tr>';
+            }).join('');
+        }
+
+        function renderOrders(orders) {
+            var sorted = orders.slice().sort(function(a, b) {
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            setText('ord-count', sorted.length + ' pedido' + (sorted.length === 1 ? '' : 's'));
+            var tbody = document.getElementById('ord-tbody');
+            if (sorted.length === 0) {
+                tbody.innerHTML = emptyRow(6, '📦', 'Sin pedidos', 'No hay pedidos en el período seleccionado.');
+                return;
+            }
+            tbody.innerHTML = sorted.map(function(o) {
+                var cust = DB.getCustomer(o.customerId);
+                var units = orderUnits(o);
+                return '<tr>' +
+                    '<td><span class="font-semibold">' + String(o.id).toUpperCase() + '</span></td>' +
+                    '<td>' + (cust ? cust.name : 'Cliente invitado') + '</td>' +
+                    '<td class="text-muted">' + formatDate(o.createdAt) + '</td>' +
+                    '<td>' + units + '</td>' +
+                    '<td class="font-semibold">' + formatPrice(o.total) + '</td>' +
+                    '<td><span class="badge ' + getStatusBadgeClass(o.status) + '">' + getStatusLabel(o.status) + '</span></td></tr>';
+            }).join('');
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function applyReports() {
+            var period = getPeriod();
+            if (!period) return;
+            var orders = filterOrdersByPeriod(period);
+            setText('period-range-text', fmtRange(period));
+            setText('period-note', currentPeriod === 'custom'
+                ? 'Mostrando rango personalizado seleccionado.'
+                : 'Referencia: últimos pedidos registrados en el sistema.');
+            renderStats(orders);
+            var series = buildChartSeries(orders, period);
+            renderBarChart('report-chart', series.values, series.labels);
+            renderTopProducts(orders);
+            renderByCategory(orders);
+            renderOrders(orders);
+        }
+
+        function setupPeriodTabs() {
+            var tabs = document.querySelectorAll('#period-tabs .period-tab');
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(function(t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    currentPeriod = tab.getAttribute('data-period');
+                    document.getElementById('custom-range').style.display = currentPeriod === 'custom' ? 'flex' : 'none';
+                    applyReports();
+                });
+            });
+        }
+
+        function initCustomDates() {
+            var now = refNow();
+            var from = addDays(startOfDay(now), -365);
+            document.getElementById('custom-from').value = dateKey(from);
+            document.getElementById('custom-to').value = dateKey(now);
+        }
+
+        function exportCSV(filename, headers, rows) {
+            var esc = function(v) { return '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"'; };
+            var csv = '\ufeff' + [headers].concat(rows).map(function(r) {
+                return r.map(esc).join(';');
+            }).join('\r\n');
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }
+
+        function exportTopCSV() {
+            var rows = [];
+            Array.prototype.forEach.call(document.querySelectorAll('#top-tbody tr'), function(tr) {
+                var tds = tr.querySelectorAll('td');
+                if (tds.length === 3) {
+                    var name = tds[0].innerText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                    rows.push([name, tds[1].innerText, tds[2].innerText]);
+                }
+            });
+            exportCSV('productos-mas-vendidos.csv', ['Producto', 'Unidades', 'Ingresos'], rows);
+        }
+
+        function exportCatCSV() {
+            var rows = [];
+            Array.prototype.forEach.call(document.querySelectorAll('#cat-tbody tr'), function(tr) {
+                var tds = tr.querySelectorAll('td');
+                if (tds.length === 3) rows.push([tds[0].innerText, tds[1].innerText, tds[2].innerText]);
+            });
+            exportCSV('ventas-por-categoria.csv', ['Categoría', 'Unidades', 'Ingresos'], rows);
+        }
+
+        function exportOrdersCSV() {
+            var rows = [];
+            Array.prototype.forEach.call(document.querySelectorAll('#ord-tbody tr'), function(tr) {
+                var tds = tr.querySelectorAll('td');
+                if (tds.length === 6) rows.push([tds[0].innerText, tds[1].innerText, tds[2].innerText, tds[3].innerText, tds[4].innerText, tds[5].innerText]);
+            });
+            exportCSV('pedidos-del-periodo.csv', ['Pedido', 'Cliente', 'Fecha', 'Unidades', 'Total', 'Estado'], rows);
+        }
+
+        initAdminPage('Reportes');
+        if (AdminAuth.isLoggedIn()) {
+            initCustomDates();
+            setupPeriodTabs();
+            applyReports();
+        }
+    </script>
+</body>
+</html>

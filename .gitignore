@@ -1,0 +1,16 @@
+# Proyectos que NO pertenecen a Libreria Creativo
+/creativo-group/
+/LE PERFUM CG/
+/para-ella/
+
+# Copia de despliegue local (Netlify publica desde la raiz del repo)
+/deploy/
+
+# Sistema / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
+
+# Node (por si acaso)
+node_modules/

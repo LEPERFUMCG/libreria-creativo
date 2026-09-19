@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Pedidos</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <style>
+        .main-content { padding: 24px 0; min-height: 60vh; }
+        .page-header { margin-bottom: 20px; }
+        .orders-list { display: flex; flex-direction: column; gap: 16px; }
+        .order-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; border-bottom: 1px solid var(--gray-100);
+        }
+        .order-card-info { display: flex; flex-direction: column; gap: 2px; }
+        .order-number { font-weight: 800; color: var(--gray-900); font-size: 0.95rem; }
+        .order-date { font-size: 0.8rem; color: var(--gray-500); }
+        .order-card-body { padding: 16px; }
+        .order-card-stats { display: flex; gap: 32px; }
+        .order-stat { display: flex; flex-direction: column; }
+        .order-stat-label { font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; }
+        .order-stat-value { font-size: 1.15rem; font-weight: 700; color: var(--gray-900); }
+        .order-card-footer { padding: 12px 16px; border-top: 1px solid var(--gray-100); }
+
+        .order-detail-section { margin-bottom: 24px; }
+        .order-detail-section h3 { font-size: 1rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-100); }
+        .order-detail-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 640px) { .order-detail-grid { grid-template-columns: 1fr 1fr; } }
+
+        .order-items { display: flex; flex-direction: column; gap: 10px; }
+        .order-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px; background: var(--gray-50); border-radius: var(--radius);
+        }
+        .order-item-image {
+            width: 48px; height: 64px; border-radius: 4px; background: var(--gray-200);
+            overflow: hidden; flex-shrink: 0;
+        }
+        .order-item-image img { width: 100%; height: 100%; object-fit: cover; }
+        .order-item-image .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .order-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .order-item-title { font-weight: 600; font-size: 0.9rem; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .order-item-qty { font-size: 0.8rem; color: var(--gray-500); }
+        .order-item-subtotal { font-weight: 700; color: var(--gray-800); flex-shrink: 0; }
+        .order-detail-total { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .order-detail-field { font-size: 0.9rem; color: var(--gray-700); text-transform: capitalize; }
+    </style>
+</head>
+<body>
+    <div id="mobile-nav" class="mobile-nav"></div>
+    <header class="site-header">
+        <div id="header-top" class="header-top"></div>
+        <div id="header-main" class="header-main"></div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Mis Pedidos</h1>
+                <p class="text-muted text-sm" id="orders-count"></p>
+            </div>
+            <div id="orders-list" class="orders-list"></div>
+            <div id="orders-empty" class="empty-state" style="display:none;">
+                <div class="empty-state-icon">📦</div>
+                <h3>No tienes pedidos aún</h3>
+                <p>Cuando realices un pedido, aparecerá aquí con su estado de seguimiento.</p>
+                <a href="catalog.html" class="btn btn-primary">Explorar Libros</a>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="order-detail-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-order-title">Detalle del Pedido</h2>
+                <button class="modal-close" onclick="Modal.hide('order-detail-modal')">✕</button>
+            </div>
+            <div class="modal-body" id="modal-order-body"></div>
+        </div>
+    </div>
+
+    <footer id="site-footer" class="site-footer"></footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initPublicPage();
+
+            const user = Auth.getCustomer();
+            if (!user) {
+                window.location.href = 'login.html?redirect=orders.html';
+                return;
+            }
+
+            renderOrders(user.id);
+        });
+
+        function renderOrders(customerId) {
+            const orders = DB.getOrders().filter(o => o.customerId === customerId);
+            const listEl = document.getElementById('orders-list');
+            const emptyEl = document.getElementById('orders-empty');
+            const countEl = document.getElementById('orders-count');
+            const config = DB.getConfig();
+
+            if (orders.length === 0) {
+                emptyEl.style.display = 'block';
+                if (countEl) countEl.textContent = '';
+                return;
+            }
+
+            if (countEl) countEl.textContent = orders.length === 1 ? '1 pedido' : orders.length + ' pedidos';
+
+            orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            listEl.innerHTML = orders.map(order => `
+                <div class="order-card card fade-in">
+                    <div class="order-card-header">
+                        <div class="order-card-info">
+                            <span class="order-number">Pedido #${order.id.toUpperCase().replace('ORD_', 'ORD-')}</span>
+                            <span class="order-date">${formatDate(order.createdAt)}</span>
+                        </div>
+                        <span class="badge ${getStatusBadgeClass(order.status)}">${getStatusLabel(order.status)}</span>
+                    </div>
+                    <div class="order-card-body">
+                        <div class="order-card-stats">
+                            <div class="order-stat">
+                                <span class="order-stat-label">Artículos</span>
+                                <span class="order-stat-value">${order.items.reduce((s, i) => s + i.quantity, 0)}</span>
+                            </div>
+                            <div class="order-stat">
+                                <span class="order-stat-label">Total</span>
+                                <span class="order-stat-value">${formatPrice(order.total, config)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-card-footer">
+                        <button class="btn btn-outline btn-sm" onclick="openOrderDetail('${order.id}')">
+                            <i class="lucide-eye" style="width:14px;height:14px;"></i> Ver Detalle
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openOrderDetail(orderId) {
+            const order = DB.getOrders().find(o => o.id === orderId);
+            if (!order) return;
+
+            const config = DB.getConfig();
+            const currentStep = ORDER_STATUSES.indexOf(order.status);
+            const books = DB.getBooks();
+            const customers = DB.getCustomers();
+            const customer = customers.find(c => c.id === order.customerId);
+            const payMethods = DB.getPaymentMethods();
+            const delivMethods = DB.getDeliveryMethods();
+            const pay = payMethods.find(p => p.id === order.paymentMethod);
+            const deliv = delivMethods.find(d => d.id === order.deliveryMethod);
+            const addr = order.shippingAddress || {};
+
+            document.getElementById('modal-order-title').textContent = 'Pedido #' + order.id.toUpperCase().replace('ORD_', 'ORD-');
+
+            document.getElementById('modal-order-body').innerHTML = `
+                <div class="order-detail">
+                    <div class="order-detail-section">
+                        <h3>Artículos</h3>
+                        <div class="order-items">
+                            ${order.items.map(item => {
+                                const book = books.find(b => b.id === item.bookId);
+                                return `
+                                    <div class="order-item">
+                                        <div class="order-item-image">
+                                            ${book && book.cover ? `<img src="${book.cover}" alt="${book.title}">` : '<div class="ph">📖</div>'}
+                                        </div>
+                                        <div class="order-item-info">
+                                            <span class="order-item-title">${book ? book.title : 'Libro'}</span>
+                                            <span class="order-item-qty">${item.quantity} × ${formatPrice(item.price, config)}</span>
+                                        </div>
+                                        <span class="order-item-subtotal">${formatPrice(item.price * item.quantity, config)}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="order-detail-section">
+                        <h3>Estado del Pedido</h3>
+                        ${order.status === 'cancelled' ?
+                            `<div style="background:var(--danger-bg);border:1px solid #fecaca;border-radius:var(--radius);padding:16px;text-align:center;">
+                                <div style="font-size:2rem;">🚫</div>
+                                <strong style="color:var(--danger);">Este pedido fue cancelado</strong>
+                            </div>`
+                        :
+                            `<div class="order-status-timeline">
+                                ${ORDER_STATUSES.map((status, i) => {
+                                    const label = getStatusLabel(status);
+                                    const completed = i < currentStep;
+                                    const current = i === currentStep;
+                                    return `
+                                        <div class="timeline-step ${completed ? 'completed' : ''} ${current ? 'active' : ''}" style="position:relative;">
+                                            <div class="timeline-dot">${completed ? '✓' : i + 1}</div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-title">${label}</div>
+                                                <div class="timeline-date">${current ? 'Estado actual' : (completed ? 'Completado' : 'Pendiente')}</div>
+                                            </div>
+                                            ${i < ORDER_STATUSES.length - 1 ? '<div class="timeline-line"></div>' : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>`
+                        }
+                    </div>
+
+                    <div class="order-detail-grid">
+                        ${addr.address ? `
+                            <div class="order-detail-section">
+                                <h3>Dirección de Envío</h3>
+                                <p class="text-muted">${addr.name ? addr.name + '<br>' : ''}${addr.address}<br>${addr.city || ''}${addr.department ? ', ' + addr.department : ''}</p>
+                                ${addr.reference ? `<p class="text-muted text-xs">Ref: ${addr.reference}</p>` : ''}
+                            </div>
+                        ` : ''}
+                        <div class="order-detail-section">
+                            <h3>Método de Pago</h3>
+                            <p class="order-detail-field">${pay ? pay.name : (order.paymentMethod || '—')}</p>
+                        </div>
+                        <div class="order-detail-section">
+                            <h3>Método de Entrega</h3>
+                            <p class="order-detail-field">${deliv ? deliv.name : (order.deliveryMethod || '—')}</p>
+                        </div>
+                        <div class="order-detail-section">
+                            <h3>Resumen</h3>
+                            <div class="cart-summary-row"><span>Subtotal</span><span>${formatPrice(order.subtotal || 0, config)}</span></div>
+                            <div class="cart-summary-row"><span>Envío</span><span>${order.shipping === 0 ? '<span class="text-success">Gratis</span>' : formatPrice(order.shipping || 0, config)}</span></div>
+                            ${order.discount ? `<div class="cart-summary-row"><span>Descuento</span><span class="text-danger">-${formatPrice(order.discount, config)}</span></div>` : ''}
+                            <div class="cart-summary-row total"><span>Total</span><span>${formatPrice(order.total, config)}</span></div>
+                        </div>
+                    </div>
+
+                    ${order.notes ? `
+                        <div class="order-detail-section">
+                            <h3>Notas</h3>
+                            <p class="text-muted">${order.notes}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            Modal.show('order-detail-modal');
+        }
+    </script>
+</body>
+</html>

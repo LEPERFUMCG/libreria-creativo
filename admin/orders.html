@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="../data/seed.js"></script>
+<script src="../data/cloud-config.js"></script>
+    <script src="../assets/js/cloud.js"></script>
+    <script src="../assets/js/app.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+        <main class="admin-main">
+            <header class="admin-topbar" id="admin-topbar"></header>
+            <div class="admin-content">
+
+                <style>
+                    .admin-toolbar {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        margin-bottom: 16px;
+                    }
+                    .admin-tools {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                        flex: 1;
+                    }
+                    .tool-input { min-width: 220px; flex: 1; }
+                    .modal-lg { max-width: 960px; }
+                    .order-detail-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+                    @media (min-width: 768px) {
+                        .order-detail-grid { grid-template-columns: 1.2fr 1fr; }
+                    }
+                    .detail-section {
+                        background: var(--gray-50);
+                        border: 1px solid var(--gray-200);
+                        border-radius: var(--radius-md);
+                        padding: 14px 16px;
+                        margin-bottom: 14px;
+                    }
+                    .detail-section-title {
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: var(--gray-500);
+                        margin-bottom: 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                    }
+                    .detail-label { font-size: 0.72rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.3px; }
+                    .table-shrink { box-shadow: none; border-radius: 6px; }
+                    .totals-box {
+                        margin-top: 10px;
+                        border-top: 1px dashed var(--gray-300);
+                        padding-top: 8px;
+                        font-size: 0.85rem;
+                    }
+                    .totals-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 2px 0;
+                        color: var(--gray-600);
+                    }
+                    .totals-row.grand {
+                        font-weight: 700;
+                        color: var(--gray-900);
+                        font-size: 0.95rem;
+                        border-top: 1px solid var(--gray-200);
+                        padding-top: 8px;
+                        margin-top: 4px;
+                    }
+                    .info-list { list-style: none; margin: 0; padding: 0; }
+                    .info-list li {
+                        display: flex;
+                        gap: 10px;
+                        padding: 7px 0;
+                        font-size: 0.85rem;
+                        border-bottom: 1px solid var(--gray-100);
+                    }
+                    .info-list li:last-child { border-bottom: none; }
+                    .info-list .k { color: var(--gray-500); min-width: 90px; flex-shrink: 0; }
+                    .info-list .v { color: var(--gray-800); font-weight: 500; }
+                    .note-empty { color: var(--gray-400); font-style: italic; font-size: 0.8rem; }
+                    .admin-notes-list { list-style: none; margin: 0; padding: 0; max-height: 150px; overflow-y: auto; }
+                    .admin-notes-list li {
+                        display: flex;
+                        gap: 8px;
+                        align-items: flex-start;
+                        padding: 6px 0;
+                        font-size: 0.82rem;
+                        border-bottom: 1px solid var(--gray-100);
+                    }
+                    .admin-notes-list li:last-child { border-bottom: none; }
+                    .admin-notes-list .dot { color: var(--warning); flex-shrink: 0; }
+                    .tl-list { list-style: none; margin: 0; padding: 0; }
+                    .tl-item { display: flex; gap: 12px; padding: 6px 0; }
+                    .tl-dot {
+                        width: 26px;
+                        height: 26px;
+                        border-radius: 50%;
+                        flex-shrink: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.7rem;
+                        background: var(--success-bg);
+                        color: var(--success);
+                    }
+                    .tl-dot.red { background: var(--danger-bg); color: var(--danger); }
+                    .tl-dot.blue { background: var(--primary-bg); color: var(--primary); }
+                    .tl-title { font-size: 0.8rem; font-weight: 600; color: var(--gray-800); }
+                    .tl-time { font-size: 0.7rem; color: var(--gray-500); }
+                    .act-list { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow-y: auto; }
+                    .act-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); align-items: flex-start; }
+                    .act-item:last-child { border-bottom: none; }
+                    .act-icon {
+                        width: 28px; height: 28px;
+                        border-radius: 50%;
+                        flex-shrink: 0;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 0.75rem;
+                        background: var(--primary-bg);
+                        color: var(--primary);
+                    }
+                    .act-icon.note { background: var(--warning-bg); color: var(--warning); }
+                    .act-icon.red { background: var(--danger-bg); color: var(--danger); }
+                    .act-icon.green { background: var(--success-bg); color: var(--success); }
+                    .act-msg { font-size: 0.8rem; color: var(--gray-700); font-weight: 500; line-height: 1.35; }
+                    .act-time { font-size: 0.68rem; color: var(--gray-500); margin-top: 2px; }
+                </style>
+
+                <div class="admin-page-header">
+                    <div>
+                        <h1 class="admin-page-title">Gestión de Pedidos</h1>
+                        <p class="text-muted text-sm mb-0" id="orders-count">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="admin-toolbar">
+                    <div class="admin-tools">
+                        <input type="text" class="form-control tool-input" id="order-search" placeholder="Buscar por pedido o cliente...">
+                        <select class="form-control" id="order-status-filter" style="min-width:180px;width:auto;">
+                            <option value="all">Todos los estados</option>
+                            <option value="received">Recibido</option>
+                            <option value="confirmed">Confirmado</option>
+                            <option value="preparing">Preparando</option>
+                            <option value="ready">Listo</option>
+                            <option value="shipped">Enviado</option>
+                            <option value="delivered">Entregado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Pedido</th>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Método Pago</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- ORDER DETAIL MODAL -->
+                <div class="modal-overlay" id="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+                    <div class="modal modal-lg">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="order-modal-title">Detalle de Pedido</h3>
+                            <button type="button" class="modal-close" onclick="Modal.hide('order-modal')">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="order-detail-grid">
+                                <div class="order-detail-col">
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Cliente</div>
+                                        <div id="order-customer-info"></div>
+                                    </div>
+
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Libros</div>
+                                        <div class="table-wrapper table-shrink">
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Libro</th>
+                                                        <th>Precio</th>
+                                                        <th>Cant.</th>
+                                                        <th>Subtotal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="order-modal-items"></tbody>
+                                            </table>
+                                        </div>
+                                        <div id="order-modal-totals"></div>
+                                    </div>
+
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Entrega y Pago</div>
+                                        <div id="order-delivery-info"></div>
+                                    </div>
+
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Notas del Cliente</div>
+                                        <div id="order-customer-notes"></div>
+                                    </div>
+                                </div>
+
+                                <div class="order-detail-col">
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Estado del Pedido</div>
+                                        <div style="margin-bottom:10px;">
+                                            <span class="badge badge-info" id="order-status-badge"></span>
+                                        </div>
+                                        <select class="form-control" id="order-status-select" onchange="changeOrderStatus()"></select>
+                                        <button type="button" class="btn btn-outline-danger" style="width:100%;margin-top:10px;" onclick="cancelOrder(currentOrderId)">Cancelar Pedido</button>
+                                    </div>
+
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Notas Internas</div>
+                                        <ul class="admin-notes-list" id="order-admin-notes-list"></ul>
+                                        <div style="display:flex;gap:8px;margin-top:8px;">
+                                            <input type="text" class="form-control" id="order-admin-note-input" placeholder="Escribe una nota...">
+                                            <button type="button" class="btn btn-primary" onclick="addAdminNote()">Añadir</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Línea de Tiempo</div>
+                                        <ul class="tl-list" id="order-timeline"></ul>
+                                    </div>
+
+                                    <div class="detail-section">
+                                        <div class="detail-section-title">Historial de Actividad</div>
+                                        <ul class="act-list" id="order-history-list"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-ghost" onclick="Modal.hide('order-modal')">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var currentOrderId = null;
+
+        function esc(s) {
+            return String(s === null || s === undefined ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getVal(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setText(id, txt) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        function formatDateTime(d) {
+            if (!d) return '';
+            var dt = new Date(d);
+            if (isNaN(dt.getTime())) return '';
+            return dt.toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) +
+                ' · ' + dt.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function loadOrders() {
+            var orders = DB.getOrders();
+            var changed = false;
+            orders.forEach(function(o) {
+                if (!Array.isArray(o.history) || o.history.length === 0) {
+                    o.history = [{
+                        id: DB.generateId('act'),
+                        type: 'created',
+                        from: '',
+                        to: o.status || 'received',
+                        user: 'Sistema',
+                        note: 'Pedido creado por el cliente',
+                        createdAt: o.createdAt || new Date().toISOString()
+                    }];
+                    changed = true;
+                }
+            });
+            if (changed) DB.setOrders(orders);
+            return orders;
+        }
+
+        function orderCustomer(o) {
+            return DB.getCustomer(o.customerId);
+        }
+
+        function paymentMethodName(o) {
+            var m = DB.getPaymentMethods().find(function(x) { return x.id === o.paymentMethod; });
+            return m ? m.name : '—';
+        }
+
+        function deliveryMethodName(o) {
+            var m = DB.getDeliveryMethods().find(function(x) { return x.id === o.deliveryMethod; });
+            return m ? m.name : '—';
+        }
+
+        function itemBook(it) {
+            return DB.getBook(it.bookId);
+        }
+
+        function emptyRow(colspan, icon, title, text) {
+            return '<tr><td colspan="' + colspan + '">' +
+                '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div>' +
+                '<div class="empty-state-title">' + title + '</div>' +
+                '<div class="empty-state-text">' + text + '</div></div></td></tr>';
+        }
+
+        function renderOrders() {
+            var orders = loadOrders();
+            var q = getVal('order-search').toLowerCase();
+            var f = document.getElementById('order-status-filter').value;
+
+            var list = orders.filter(function(o) {
+                if (f !== 'all' && o.status !== f) return false;
+                if (q) {
+                    var cust = orderCustomer(o);
+                    var name = cust ? cust.name.toLowerCase() : '';
+                    if (o.id.toLowerCase().indexOf(q) === -1 && name.indexOf(q) === -1) return false;
+                }
+                return true;
+            });
+
+            list = list.slice().sort(function(a, b) {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+
+            setText('orders-count', list.length + ' pedido' + (list.length === 1 ? '' : 's') + ' encontrado' + (list.length === 1 ? '' : 's'));
+
+            var tbody = document.getElementById('orders-tbody');
+            if (list.length === 0) {
+                tbody.innerHTML = emptyRow(7, '📦', 'Sin pedidos', 'No se encontraron pedidos con los filtros actuales.');
+                return;
+            }
+
+            tbody.innerHTML = list.map(function(o) {
+                var cust = orderCustomer(o);
+                var pm = paymentMethodName(o);
+                var cancelled = o.status === 'cancelled';
+                return '<tr>' +
+                    '<td><span class="font-semibold">#' + esc(o.id.toUpperCase()) + '</span>' +
+                    '<div class="text-xs text-muted">' + formatDate(o.createdAt) + '</div></td>' +
+                    '<td>' + (cust ? esc(cust.name) : 'Cliente invitado') +
+                    '<div class="text-xs text-muted">' + (cust ? esc(cust.email) : '') + '</div></td>' +
+                    '<td>' + formatDate(o.createdAt) + '</td>' +
+                    '<td class="font-semibold">' + formatPrice(o.total) + '</td>' +
+                    '<td>' + esc(pm) + '</td>' +
+                    '<td><span class="badge ' + getStatusBadgeClass(o.status) + '">' + getStatusLabel(o.status) + '</span></td>' +
+                    '<td><div class="table-actions">' +
+                    '<button type="button" class="btn btn-sm" onclick="openOrderModal(\'' + o.id + '\')">👁 Ver</button>' +
+                    (cancelled ? '' : '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="cancelOrder(\'' + o.id + '\')" title="Cancelar pedido">✕</button>') +
+                    '</div></td></tr>';
+            }).join('');
+        }
+
+        function openOrderModal(id) {
+            var orders = loadOrders();
+            var o = orders.find(function(x) { return x.id === id; });
+            if (!o) return;
+            currentOrderId = id;
+            renderOrderDetails(o);
+            Modal.show('order-modal');
+        }
+
+        function renderOrderDetails(o) {
+            setText('order-modal-title', 'Pedido #' + o.id.toUpperCase());
+
+            var cust = orderCustomer(o);
+            var customerHTML = cust
+                ? '<ul class="info-list">' +
+                  '<li><span class="k">Nombre</span><span class="v">' + esc(cust.name) + '</span></li>' +
+                  '<li><span class="k">Email</span><span class="v">' + esc(cust.email) + '</span></li>' +
+                  (cust.phone ? '<li><span class="k">Teléfono</span><span class="v">' + esc(cust.phone) + '</span></li>' : '') +
+                  (cust.whatsapp ? '<li><span class="k">WhatsApp</span><span class="v">' + esc(cust.whatsapp) + '</span></li>' : '') +
+                  '</ul>'
+                : '<div class="note-empty">Cliente invitado (sin cuenta registrada).</div>';
+            setText('order-customer-info', '');
+            document.getElementById('order-customer-info').innerHTML = customerHTML;
+
+            var itemsTbody = document.getElementById('order-modal-items');
+            if (o.items.length === 0) {
+                itemsTbody.innerHTML = emptyRow(4, '📚', 'Sin libros', 'Este pedido no contiene libros.');
+            } else {
+                itemsTbody.innerHTML = o.items.map(function(it) {
+                    var b = itemBook(it);
+                    var title = b ? b.title : 'Libro #' + it.bookId;
+                    return '<tr>' +
+                        '<td><span class="font-semibold">' + esc(title) + '</span></td>' +
+                        '<td>' + formatPrice(it.price) + '</td>' +
+                        '<td>' + it.quantity + '</td>' +
+                        '<td class="font-semibold">' + formatPrice(it.price * it.quantity) + '</td></tr>';
+                }).join('');
+            }
+
+            var totalsHTML =
+                '<div class="totals-box">' +
+                '<div class="totals-row"><span>Subtotal</span><span>' + formatPrice(o.subtotal !== undefined ? o.subtotal : o.total) + '</span></div>' +
+                '<div class="totals-row"><span>Envío</span><span>' + formatPrice(o.shipping || 0) + '</span></div>' +
+                (o.discount > 0 ? '<div class="totals-row" style="color:var(--success);"><span>Descuento</span><span>- ' + formatPrice(o.discount) + '</span></div>' : '') +
+                '<div class="totals-row grand"><span>Total</span><span>' + formatPrice(o.total) + '</span></div></div>';
+            setText('order-modal-totals', '');
+            document.getElementById('order-modal-totals').innerHTML = totalsHTML;
+
+            var addr = o.shippingAddress || {};
+            var deliveryHTML =
+                '<ul class="info-list">' +
+                '<li><span class="k">Dirección</span><span class="v">' + esc(addr.address || '—') + '</span></li>' +
+                '<li><span class="k">Ciudad</span><span class="v">' + esc(addr.city || '—') + '</span></li>' +
+                '<li><span class="k">Dept.</span><span class="v">' + esc(addr.department || '—') + '</span></li>' +
+                (addr.reference ? '<li><span class="k">Referencia</span><span class="v">' + esc(addr.reference) + '</span></li>' : '') +
+                '<li><span class="k">Método Pago</span><span class="v">' + esc(paymentMethodName(o)) + '</span></li>' +
+                '<li><span class="k">Entrega</span><span class="v">' + esc(deliveryMethodName(o)) + '</span></li></ul>';
+            setText('order-delivery-info', '');
+            document.getElementById('order-delivery-info').innerHTML = deliveryHTML;
+
+            var notesEl = document.getElementById('order-customer-notes');
+            if (o.notes) {
+                notesEl.innerHTML = '<p class="text-sm text-muted" style="margin:0;">' + esc(o.notes) + '</p>';
+            } else {
+                notesEl.innerHTML = '<div class="note-empty">El cliente no agregó notas.</div>';
+            }
+
+            var statusBadge = document.getElementById('order-status-badge');
+            statusBadge.className = 'badge ' + getStatusBadgeClass(o.status);
+            statusBadge.textContent = getStatusLabel(o.status);
+
+            var select = document.getElementById('order-status-select');
+            var ordered = ['received', 'confirmed', 'preparing', 'ready', 'shipped', 'delivered', 'cancelled'];
+            select.innerHTML = ordered.map(function(s) {
+                return '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + getStatusLabel(s) + '</option>';
+            }).join('');
+            select.disabled = o.status === 'cancelled';
+
+            var notesList = document.getElementById('order-admin-notes-list');
+            var notes = (o.adminNotes || '').split('\n').filter(function(n) { return n.trim(); });
+            notesList.innerHTML = notes.length
+                ? notes.map(function(n) { return '<li><span class="dot">●</span><span>' + esc(n) + '</span></li>'; }).join('')
+                : '<li class="note-empty" style="border:none;padding:2px 0;">Sin notas internas.</li>';
+
+            var history = o.history || [];
+            var created = history.filter(function(e) { return e.type === 'created'; }).length;
+
+            var tl = history.slice().reverse();
+            var tlEl = document.getElementById('order-timeline');
+            tlEl.innerHTML = tl.map(function(e) {
+                var dotCls = e.to === 'cancelled' ? 'red' : (e.type === 'created' ? 'blue' : 'green');
+                var icon = e.to === 'cancelled' ? '✕' : (e.type === 'created' ? '🛒' : '✓');
+                var title = e.type === 'created'
+                    ? 'Pedido creado'
+                    : (e.type === 'note' ? 'Nota agregada' : 'Estado: ' + getStatusLabel(e.to));
+                return '<li class="tl-item">' +
+                    '<div class="tl-dot ' + dotCls + '">' + icon + '</div>' +
+                    '<div><div class="tl-title">' + title + '</div>' +
+                    '<div class="tl-time">' + formatDateTime(e.createdAt) + (e.user ? ' · ' + esc(e.user) : '') + '</div></div></li>';
+            }).join('');
+
+            var actEl = document.getElementById('order-history-list');
+            actEl.innerHTML = history.map(function(e) {
+                var cls = e.to === 'cancelled' ? 'red' : (e.type === 'note' ? 'note' : (e.type === 'created' ? 'green' : ''));
+                var icon = e.to === 'cancelled' ? '✕' : (e.type === 'note' ? '📝' : '🚚');
+                var msg = e.type === 'note'
+                    ? 'Nota interna: ' + (e.note || '')
+                    : (e.type === 'created'
+                        ? 'Pedido registrado'
+                        : 'Estado: ' + getStatusLabel(e.from) + ' → ' + getStatusLabel(e.to));
+                return '<li class="act-item">' +
+                    '<div class="act-icon ' + cls + '">' + icon + '</div>' +
+                    '<div><div class="act-msg">' + esc(msg) + '</div>' +
+                    '<div class="act-time">' + formatDateTime(e.createdAt) + (e.user ? ' · ' + esc(e.user) : '') + '</div></div></li>';
+            }).join('');
+        }
+
+        function changeOrderStatus() {
+            var orders = loadOrders();
+            var o = orders.find(function(x) { return x.id === currentOrderId; });
+            if (!o || o.status === 'cancelled') return;
+            var select = document.getElementById('order-status-select');
+            var newStatus = select.value;
+            if (newStatus === 'cancelled') {
+                select.value = o.status;
+                cancelOrder(o.id);
+                return;
+            }
+            var from = o.status;
+            o.status = newStatus;
+            o.updatedAt = new Date().toISOString();
+            o.history.unshift({
+                id: DB.generateId('act'),
+                type: 'status',
+                from: from,
+                to: newStatus,
+                user: (AdminAuth.getUser() || {}).name || 'Administrador',
+                createdAt: new Date().toISOString()
+            });
+            DB.setOrders(orders);
+            Toast.show('Estado actualizado a ' + getStatusLabel(newStatus), 'success');
+            renderOrderDetails(o);
+            renderOrders();
+        }
+
+        function cancelOrder(id) {
+            var orders = loadOrders();
+            var o = orders.find(function(x) { return x.id === id; });
+            if (!o || o.status === 'cancelled') return;
+            Modal.confirm('¿Cancelar el pedido #' + o.id.toUpperCase() + '? Esta acción no se puede deshacer.', function() {
+                var ords = loadOrders();
+                var ord = ords.find(function(x) { return x.id === id; });
+                if (!ord || ord.status === 'cancelled') return;
+                ord.status = 'cancelled';
+                ord.updatedAt = new Date().toISOString();
+                ord.history.unshift({
+                    id: DB.generateId('act'),
+                    type: 'cancelled',
+                    from: o.status,
+                    to: 'cancelled',
+                    user: (AdminAuth.getUser() || {}).name || 'Administrador',
+                    createdAt: new Date().toISOString()
+                });
+                DB.setOrders(ords);
+                Toast.show('Pedido cancelado', 'warning');
+                if (currentOrderId === id) renderOrderDetails(ord);
+                renderOrders();
+            });
+        }
+
+        function addAdminNote() {
+            var input = document.getElementById('order-admin-note-input');
+            var text = input.value.trim();
+            if (!text) {
+                Toast.show('Escribe una nota primero', 'error');
+                return;
+            }
+            var orders = loadOrders();
+            var o = orders.find(function(x) { return x.id === currentOrderId; });
+            if (!o) return;
+            var now = new Date().toISOString();
+            var stamp = new Date().toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) +
+                ' ' + new Date().toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+            o.adminNotes = (o.adminNotes ? o.adminNotes.trim().replace(/\s+$/, '') + '\n' : '') + '[' + stamp + '] ' + text;
+            o.updatedAt = now;
+            o.history.unshift({
+                id: DB.generateId('act'),
+                type: 'note',
+                note: text,
+                user: (AdminAuth.getUser() || {}).name || 'Administrador',
+                createdAt: now
+            });
+            DB.setOrders(orders);
+            input.value = '';
+            Toast.show('Nota agregada', 'success');
+            renderOrderDetails(o);
+            renderOrders();
+        }
+
+        initAdminPage('Pedidos');
+        if (AdminAuth.isLoggedIn()) {
+            renderOrders();
+            document.getElementById('order-search').addEventListener('input', renderOrders);
+            document.getElementById('order-status-filter').addEventListener('change', renderOrders);
+        }
+    </script>
+</body>
+</html>
