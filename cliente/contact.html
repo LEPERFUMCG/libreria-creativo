@@ -145,30 +145,13 @@
 
         function renderSocialLinks(config) {
             const container = document.getElementById('social-links');
-            const s = config.social || {};
-            const socials = {
-                facebook: config.facebook || s.facebook,
-                instagram: config.instagram || s.instagram,
-                twitter: config.twitter || s.twitter,
-                tiktok: config.tiktok || s.tiktok
-            };
-
-            const links = [];
-            if (socials.facebook) links.push({ icon: 'lucide-facebook', url: socials.facebook, label: 'Facebook' });
-            if (socials.instagram) links.push({ icon: 'lucide-instagram', url: socials.instagram, label: 'Instagram' });
-            if (socials.twitter) links.push({ icon: 'lucide-twitter', url: socials.twitter, label: 'Twitter' });
-            if (socials.tiktok) links.push({ icon: 'lucide-music', url: socials.tiktok, label: 'TikTok' });
-
-            if (links.length === 0) {
+            const html = SocialIcons.render(config, 20, 'social-link');
+            if (!html) {
                 container.style.display = 'none';
                 return;
             }
 
-            container.innerHTML = `<h3>Redes Sociales</h3><div class="social-links-grid">${links.map(l => `
-                <a href="${l.url}" target="_blank" class="social-link" title="${l.label}">
-                    <i class="${l.icon}"></i>
-                </a>
-            `).join('')}</div>`;
+            container.innerHTML = '<h3>Redes Sociales</h3><div class="social-links-grid">' + html + '</div>';
         }
 
         function handleSubmit() {

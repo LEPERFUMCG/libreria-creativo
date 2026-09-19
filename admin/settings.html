@@ -135,18 +135,23 @@
 
           <div class="config-card">
             <h3>Redes Sociales</h3>
+            <p class="text-muted text-sm" style="margin:-6px 0 12px;">Marca cuáles se muestran en el sitio. Si no hay enlace, la red no aparece.</p>
             <div class="form-grid">
               <div class="form-group">
-                <label>Facebook</label>
+                <label class="form-check" style="margin-bottom:6px;"><input type="checkbox" id="cfg-facebook-on" checked> <span>Mostrar Facebook</span></label>
                 <input type="url" id="cfg-facebook" placeholder="https://facebook.com/tupagina">
               </div>
               <div class="form-group">
-                <label>Instagram</label>
+                <label class="form-check" style="margin-bottom:6px;"><input type="checkbox" id="cfg-instagram-on" checked> <span>Mostrar Instagram</span></label>
                 <input type="url" id="cfg-instagram" placeholder="https://instagram.com/tuusuario">
               </div>
               <div class="form-group">
-                <label>Twitter / X</label>
+                <label class="form-check" style="margin-bottom:6px;"><input type="checkbox" id="cfg-twitter-on" checked> <span>Mostrar Twitter / X</span></label>
                 <input type="url" id="cfg-twitter" placeholder="https://twitter.com/tuusuario">
+              </div>
+              <div class="form-group">
+                <label class="form-check" style="margin-bottom:6px;"><input type="checkbox" id="cfg-whatsapp-on" checked> <span>Mostrar WhatsApp</span></label>
+                <div class="form-hint">Usa el número de WhatsApp de "Información del Negocio".</div>
               </div>
             </div>
           </div>
@@ -185,6 +190,12 @@
       document.getElementById('cfg-facebook').value = cfg.facebook || cfg.social?.facebook || '';
       document.getElementById('cfg-instagram').value = cfg.instagram || cfg.social?.instagram || '';
       document.getElementById('cfg-twitter').value = cfg.twitter || cfg.social?.twitter || '';
+
+      const sv = cfg.socialVisible || {};
+      document.getElementById('cfg-facebook-on').checked = sv.facebook !== false;
+      document.getElementById('cfg-instagram-on').checked = sv.instagram !== false;
+      document.getElementById('cfg-twitter-on').checked = sv.twitter !== false;
+      document.getElementById('cfg-whatsapp-on').checked = sv.whatsapp !== false;
 
       if (cfg.logo) {
         document.getElementById('cfg-logo-preview').innerHTML = '<img src="' + cfg.logo + '">';
@@ -243,7 +254,13 @@
         freeShippingMin: parseFloat(document.getElementById('cfg-free-shipping').value) || 0,
         facebook: document.getElementById('cfg-facebook').value,
         instagram: document.getElementById('cfg-instagram').value,
-        twitter: document.getElementById('cfg-twitter').value
+        twitter: document.getElementById('cfg-twitter').value,
+        socialVisible: {
+          facebook: document.getElementById('cfg-facebook-on').checked,
+          instagram: document.getElementById('cfg-instagram-on').checked,
+          twitter: document.getElementById('cfg-twitter-on').checked,
+          whatsapp: document.getElementById('cfg-whatsapp-on').checked
+        }
       };
 
       DB.setConfig(updated);
