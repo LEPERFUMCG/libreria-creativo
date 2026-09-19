@@ -321,7 +321,7 @@ const AdminAuth = {
   },
   logout() {
     localStorage.removeItem('bookstore_currentAdmin');
-    window.location.href = '../index.html';
+    window.location.href = 'login.html';
   },
   isLoggedIn() {
     return !!this.getUser();
@@ -941,20 +941,6 @@ function renderAdminSidebar() {
     ]}
   ];
 
-  const roleLabel = {
-    superadmin: 'Superadmin',
-    admin: 'Administrador',
-    inventory: 'Inventario',
-    sales: 'Ventas',
-    support: 'Soporte'
-  };
-  const switchOptions = DB.getAdminUsers().map(u => {
-    const rl = roleLabel[u.role] || u.role || '';
-    const dis = u.active ? '' : ' disabled';
-    const sel = u.id === user.id ? ' selected' : '';
-    return `<option value="${u.id}"${dis}${sel}>${u.name} — ${rl}${u.active ? '' : ' (inactivo)'}</option>`;
-  }).join('');
-
   sidebar.innerHTML = `
     <div class="admin-sidebar-header">
       <div class="admin-sidebar-logo">L</div>
@@ -962,13 +948,6 @@ function renderAdminSidebar() {
         <div class="admin-sidebar-name">${DB.getConfig().storeName}</div>
         <div class="admin-sidebar-role">${user.role === 'superadmin' ? 'Superadmin' : user.name}</div>
       </div>
-    </div>
-    <div class="admin-user-switch">
-      <label class="admin-user-switch-label" for="admin-user-switch">Cambiar de usuario</label>
-      <select id="admin-user-switch" class="admin-user-switch-select" onchange="onAdminUserSwitch(this)">
-        ${switchOptions}
-        <option value="__new__">＋ Nuevo / administrar usuarios…</option>
-      </select>
     </div>
     <div class="admin-nav">
       ${menuItems.map(section => `
@@ -991,28 +970,11 @@ function renderAdminSidebar() {
     </div>`;
 }
 
-function switchAdminUser(id) {
-  const users = DB.getAdminUsers();
-  const u = users.find(x => x.id === id);
-  if (!u) return;
-  if (!u.active) { Toast.show('Ese usuario está desactivado', 'error'); return; }
-  const safeUser = Object.assign({}, u);
-  delete safeUser.password;
-  localStorage.setItem('bookstore_currentAdmin', JSON.stringify(safeUser));
-  Toast.show('Sesión cambiada a ' + u.name, 'success');
-  setTimeout(function () { window.location.reload(); }, 600);
-}
-
-function onAdminUserSwitch(sel) {
-  if (!sel) return;
-  if (sel.value === '__new__') { window.location.href = 'users.html'; return; }
-  switchAdminUser(sel.value);
-}
-
 function renderAdminTopbar(title) {
   const topbar = document.getElementById('admin-topbar');
   if (!topbar) return;
   const notifications = DB.getNotifications().filter(n => !n.read);
+  const currentUser = AdminAuth.getUser() || {};
   topbar.innerHTML = `
     <div class="admin-topbar-left">
       <button class="admin-burger" onclick="toggleAdminSidebar()"><i class="lucide-menu"></i></button>
@@ -1032,11 +994,100 @@ function renderAdminTopbar(title) {
           <div class="notif-list" id="notif-list">${renderNotificationsList()}</div>
         </div>
       </div>
-      <div class="admin-user-info" style="display:flex;align-items:center;gap:8px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">${(AdminAuth.getUser()?.name || 'A')[0]}</div>
-        <span class="hide-mobile text-sm font-semibold">${AdminAuth.getUser()?.name || 'Admin'}</span>
+      <div class="admin-user-wrap">
+        <button type="button" class="admin-user-info" onclick="toggleAdminUserMenu(event)" title="Cuenta">
+          <div class="admin-user-avatar">${(currentUser.name || 'A')[0]}</div>
+          <span class="hide-mobile text-sm font-semibold">${currentUser.name || 'Admin'}</span>
+          <i class="lucide-chevron-down admin-user-caret"></i>
+        </button>
+        <div class="admin-user-dropdown" id="admin-user-dropdown">
+          <div class="admin-user-dropdown-head">
+            <div class="admin-user-dropdown-name">${currentUser.name || 'Admin'}</div>
+            <div class="admin-user-dropdown-email">${currentUser.email || ''}</div>
+          </div>
+          <button type="button" class="admin-user-dropdown-item" onclick="openSwitchUserModal()"><i class="lucide-repeat"></i> Cambiar de usuario</button>
+          <button type="button" class="admin-user-dropdown-item danger" onclick="AdminAuth.logout()"><i class="lucide-log-out"></i> Cerrar sesión</button>
+        </div>
       </div>
     </div>`;
+}
+
+function toggleAdminUserMenu(event) {
+  if (event) event.stopPropagation();
+  const dd = document.getElementById('admin-user-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('open');
+}
+
+function closeAdminUserMenu() {
+  const dd = document.getElementById('admin-user-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+
+function ensureSwitchUserModal() {
+  if (document.getElementById('switch-user-modal')) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'switch-user-modal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Cambiar de usuario</h3>
+        <button type="button" class="modal-close" onclick="Modal.hide('switch-user-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="admin-user-dropdown-head" style="margin-bottom:16px;">
+          <div class="admin-user-dropdown-name">Ingresa las credenciales del otro usuario administrador</div>
+        </div>
+        <form id="switch-user-form">
+          <div class="form-group">
+            <label class="form-label" for="switch-user-email">Correo Electrónico</label>
+            <input type="email" class="form-control" id="switch-user-email" placeholder="usuario@libreria-creativo.com" autocomplete="username" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="switch-user-password">Contraseña</label>
+            <input type="password" class="form-control" id="switch-user-password" placeholder="Tu contraseña" autocomplete="current-password" required>
+          </div>
+          <div class="form-error" id="switch-user-error" style="display:none;"></div>
+          <div class="modal-footer" style="padding:0;">
+            <button type="button" class="btn btn-ghost" onclick="Modal.hide('switch-user-modal')">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Ingresar</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#switch-user-form').addEventListener('submit', submitSwitchUser);
+}
+
+function openSwitchUserModal() {
+  closeAdminUserMenu();
+  ensureSwitchUserModal();
+  const form = document.getElementById('switch-user-form');
+  if (form) form.reset();
+  const err = document.getElementById('switch-user-error');
+  if (err) { err.style.display = 'none'; err.textContent = ''; }
+  Modal.show('switch-user-modal');
+  setTimeout(function () {
+    const email = document.getElementById('switch-user-email');
+    if (email) email.focus();
+  }, 100);
+}
+
+function submitSwitchUser(e) {
+  e.preventDefault();
+  const email = document.getElementById('switch-user-email').value.trim().toLowerCase();
+  const password = document.getElementById('switch-user-password').value;
+  const err = document.getElementById('switch-user-error');
+  const result = AdminAuth.login(email, password);
+  if (!result.success) {
+    if (err) { err.textContent = result.message || 'Credenciales incorrectas'; err.style.display = 'block'; }
+    return;
+  }
+  Toast.show('Sesión iniciada como ' + (result.user?.name || email), 'success');
+  setTimeout(function () { window.location.reload(); }, 500);
 }
 
 function toggleAdminSidebar() {
@@ -1104,9 +1155,10 @@ function markAllNotificationsRead() {
 
 if (typeof window !== 'undefined' && !window.__notifOutsideClickBound) {
   document.addEventListener('click', function(e) {
-    const dd = document.getElementById('notif-dropdown');
-    if (!dd || !dd.classList.contains('open')) return;
-    if (!e.target.closest('.notif-wrap')) dd.classList.remove('open');
+    const nd = document.getElementById('notif-dropdown');
+    if (nd && nd.classList.contains('open') && !e.target.closest('.notif-wrap')) nd.classList.remove('open');
+    const ud = document.getElementById('admin-user-dropdown');
+    if (ud && ud.classList.contains('open') && !e.target.closest('.admin-user-wrap')) ud.classList.remove('open');
   });
   window.__notifOutsideClickBound = true;
 }

@@ -241,7 +241,6 @@
                     '<span class="switch-slider"></span></label>' +
                     '</td>' +
                     '<td><div class="table-actions">' +
-                    '<button type="button" class="btn btn-icon btn-sm" onclick="loginAsUser(\'' + u.id + '\')" title="Entrar como este usuario">🔑</button>' +
                     '<button type="button" class="btn btn-icon btn-sm" onclick="openUserModal(\'' + u.id + '\')" title="Editar">✎</button>' +
                     '<button type="button" class="btn btn-icon btn-sm" style="color:var(--danger);" onclick="deleteUser(\'' + u.id + '\')" title="Eliminar">🗑</button>' +
                     '</div></td>' +
@@ -305,17 +304,6 @@
                 Toast.show('Usuario eliminado', 'success');
                 renderUsers();
             });
-        }
-
-        function loginAsUser(id) {
-            var u = DB.getAdminUsers().find(function(x) { return x.id === id; });
-            if (!u) return;
-            if (!u.active) { Toast.show('Ese usuario está desactivado', 'error'); return; }
-            var safeUser = Object.assign({}, u);
-            delete safeUser.password;
-            localStorage.setItem('bookstore_currentAdmin', JSON.stringify(safeUser));
-            Toast.show('Sesión iniciada como ' + u.name, 'success');
-            setTimeout(function() { window.location.href = 'index.html'; }, 600);
         }
 
         function saveUser(e) {
