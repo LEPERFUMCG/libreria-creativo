@@ -1360,6 +1360,30 @@ select.form-control {
   font-size: 0.7rem;
   color: var(--gray-500);
 }
+.admin-user-switch {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--gray-800);
+}
+.admin-user-switch-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+.admin-user-switch-select {
+  width: 100%;
+  background: var(--gray-800);
+  color: var(--white);
+  border: 1px solid var(--gray-700);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.admin-user-switch-select:focus { outline: none; border-color: var(--primary); }
 .admin-nav {
   flex: 1;
   padding: 8px 0;

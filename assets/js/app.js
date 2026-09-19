@@ -941,6 +941,20 @@ function renderAdminSidebar() {
     ]}
   ];
 
+  const roleLabel = {
+    superadmin: 'Superadmin',
+    admin: 'Administrador',
+    inventory: 'Inventario',
+    sales: 'Ventas',
+    support: 'Soporte'
+  };
+  const switchOptions = DB.getAdminUsers().map(u => {
+    const rl = roleLabel[u.role] || u.role || '';
+    const dis = u.active ? '' : ' disabled';
+    const sel = u.id === user.id ? ' selected' : '';
+    return `<option value="${u.id}"${dis}${sel}>${u.name} — ${rl}${u.active ? '' : ' (inactivo)'}</option>`;
+  }).join('');
+
   sidebar.innerHTML = `
     <div class="admin-sidebar-header">
       <div class="admin-sidebar-logo">L</div>
@@ -948,6 +962,13 @@ function renderAdminSidebar() {
         <div class="admin-sidebar-name">${DB.getConfig().storeName}</div>
         <div class="admin-sidebar-role">${user.role === 'superadmin' ? 'Superadmin' : user.name}</div>
       </div>
+    </div>
+    <div class="admin-user-switch">
+      <label class="admin-user-switch-label" for="admin-user-switch">Cambiar de usuario</label>
+      <select id="admin-user-switch" class="admin-user-switch-select" onchange="onAdminUserSwitch(this)">
+        ${switchOptions}
+        <option value="__new__">＋ Nuevo / administrar usuarios…</option>
+      </select>
     </div>
     <div class="admin-nav">
       ${menuItems.map(section => `
@@ -968,6 +989,24 @@ function renderAdminSidebar() {
       <a href="../index.html" class="admin-nav-item" style="margin:0;padding:8px 0;"><i class="lucide-external-link" style="width:18px;height:18px;"></i> Ver Tienda</a>
       <button class="admin-nav-item w-full" style="margin:0;padding:8px 0;color:var(--danger);" onclick="AdminAuth.logout()"><i class="lucide-log-out" style="width:18px;height:18px;"></i> Cerrar Sesión</button>
     </div>`;
+}
+
+function switchAdminUser(id) {
+  const users = DB.getAdminUsers();
+  const u = users.find(x => x.id === id);
+  if (!u) return;
+  if (!u.active) { Toast.show('Ese usuario está desactivado', 'error'); return; }
+  const safeUser = Object.assign({}, u);
+  delete safeUser.password;
+  localStorage.setItem('bookstore_currentAdmin', JSON.stringify(safeUser));
+  Toast.show('Sesión cambiada a ' + u.name, 'success');
+  setTimeout(function () { window.location.reload(); }, 600);
+}
+
+function onAdminUserSwitch(sel) {
+  if (!sel) return;
+  if (sel.value === '__new__') { window.location.href = 'users.html'; return; }
+  switchAdminUser(sel.value);
 }
 
 function renderAdminTopbar(title) {
