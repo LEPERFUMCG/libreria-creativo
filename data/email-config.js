@@ -11,7 +11,7 @@
 // el codigo se muestra en pantalla en vez de enviarse.
 // ============================================
 const EMAIL_CONFIG = {
-  serviceId: "",
-  templateId: "",
-  publicKey: ""
+  serviceId: "service_ksn11s9",
+  templateId: "template_7i4xpww",
+  publicKey: "Xyfahr4L6K84Td8ME"
 };
