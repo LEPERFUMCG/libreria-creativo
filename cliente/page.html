@@ -49,7 +49,7 @@
             }
 
             const pages = DB.getPages();
-            const page = pages.find(p => p.slug === slug);
+            const page = pages[slug] || null;
 
             if (!page) {
                 renderNotFound();
