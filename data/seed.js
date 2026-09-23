@@ -321,97 +321,17 @@ const SEED_DATA = {
     }
   ],
 
-  adminUsers: [
-    {
-      id: "admin1", name: "Administrador General", email: "admin@libreria-creativo.com",
-      role: "superadmin", active: true, password: "pass123",
-      permissions: ["all"]
-    },
-    {
-      id: "admin2", name: "María López", email: "maria@libreria-creativo.com",
-      role: "admin", active: true, password: "pass123",
-      permissions: ["books", "orders", "customers", "inventory", "categories", "homepage"]
-    },
-    {
-      id: "admin3", name: "Carlos Rivera", email: "carlos@libreria-creativo.com",
-      role: "inventory", active: true, password: "pass123",
-      permissions: ["books", "inventory", "categories"]
-    }
-  ],
+  adminUsers: [],
 
-  customers: [
-    {
-      id: "cust1", name: "Ana Martínez", email: "ana@email.com", phone: "9988-1122",
-      whatsapp: "9988-1122", password: "pass123", active: true,
-      addresses: [{ id: "addr1", name: "Casa", address: "Col. Los Robles, 3ra Ave", city: "Tegucigalpa", department: "Francisco Morazán", reference: "Frente a pulpería", default: true }],
-      createdAt: "2024-02-15"
-    },
-    {
-      id: "cust2", name: "Roberto Díaz", email: "roberto@email.com", phone: "8877-3344",
-      whatsapp: "8877-3344", password: "pass123", active: true,
-      addresses: [{ id: "addr2", name: "Oficina", address: "Blvd. Morazán, Edif. 5", city: "San Pedro Sula", department: "Cortés", reference: "Junto a banco Atlántida", default: true }],
-      createdAt: "2024-03-10"
-    }
-  ],
+  customers: [],
 
-  orders: [
-    {
-      id: "ord1", customerId: "cust1", items: [
-        { bookId: "bk1", quantity: 1, price: 299 },
-        { bookId: "bk4", quantity: 2, price: 150 }
-      ],
-      subtotal: 599, shipping: 50, discount: 0, total: 649,
-      status: "delivered", paymentMethod: "pm1", deliveryMethod: "dm1",
-      shippingAddress: { address: "Col. Los Robles, 3ra Ave", city: "Tegucigalpa", department: "Francisco Morazán", reference: "Frente a pulpería" },
-      notes: "", adminNotes: "", createdAt: "2024-03-20", updatedAt: "2024-03-23"
-    },
-    {
-      id: "ord2", customerId: "cust2", items: [
-        { bookId: "bk7", quantity: 1, price: 275 },
-        { bookId: "bk12", quantity: 1, price: 310 }
-      ],
-      subtotal: 585, shipping: 80, discount: 0, total: 665,
-      status: "confirmed", paymentMethod: "pm2", deliveryMethod: "dm1",
-      shippingAddress: { address: "Blvd. Morazán, Edif. 5", city: "San Pedro Sula", department: "Cortés", reference: "Junto a banco Atlántida" },
-      notes: "Envío urgente por favor", adminNotes: "", createdAt: "2024-04-01", updatedAt: "2024-04-01"
-    },
-    {
-      id: "ord3", customerId: "cust1", items: [
-        { bookId: "bk11", quantity: 1, price: 399 },
-        { bookId: "bk16", quantity: 1, price: 420 }
-      ],
-      subtotal: 819, shipping: 50, discount: 0, total: 869,
-      status: "preparing", paymentMethod: "pm4", deliveryMethod: "dm2",
-      shippingAddress: { address: "Col. Los Robles, 3ra Ave", city: "Tegucigalpa", department: "Francisco Morazán", reference: "" },
-      notes: "", adminNotes: "Cliente VIP", createdAt: "2024-04-05", updatedAt: "2024-04-05"
-    }
-  ],
+  orders: [],
 
-  contactMessages: [
-    {
-      id: "msg1", name: "Pedro Suárez", email: "pedro@email.com",
-      phone: "7766-5544", subject: "Consulta sobre envíos",
-      message: "¿Realizan envíos a Comayagua? ¿Cuál sería el costo?",
-      status: "unread", createdAt: "2024-04-03"
-    }
-  ],
+  contactMessages: [],
 
-  inventory: [
-    { id: "inv1", bookId: "bk1", type: "initial", quantity: 50, previousStock: 0, newStock: 50, note: "Stock inicial", userId: "admin1", createdAt: "2024-01-15" },
-    { id: "inv2", bookId: "bk1", type: "sale", quantity: -5, previousStock: 50, newStock: 45, note: "Venta", userId: "admin1", createdAt: "2024-03-20" },
-    { id: "inv3", bookId: "bk10", type: "initial", quantity: 100, previousStock: 0, newStock: 100, note: "Stock inicial", userId: "admin1", createdAt: "2024-01-05" },
-    { id: "inv4", bookId: "bk10", type: "sale", quantity: -20, previousStock: 100, newStock: 80, note: "Ventas del mes", userId: "admin2", createdAt: "2024-03-25" },
-    { id: "inv5", bookId: "bk18", type: "initial", quantity: 25, previousStock: 0, newStock: 25, note: "Stock inicial", userId: "admin1", createdAt: "2024-02-28" },
-    { id: "inv6", bookId: "bk18", type: "sale", quantity: -25, previousStock: 25, newStock: 0, note: "Agotado por ventas", userId: "admin3", createdAt: "2024-04-02" }
-  ],
+  inventory: [],
 
-  notifications: [
-    { id: "notif1", type: "new_order", message: "Nuevo pedido #ORD-003 recibido", read: false, createdAt: "2024-04-05" },
-    { id: "notif2", type: "low_stock", message: "Stock bajo: Inteligencia Artificial (12 unidades)", read: false, createdAt: "2024-04-04" },
-    { id: "notif3", type: "out_of_stock", message: "Agotado: Matemáticas para Todos", read: true, createdAt: "2024-04-02" },
-    { id: "notif4", type: "new_customer", message: "Nuevo cliente registrado: Roberto Díaz", read: true, createdAt: "2024-03-10" },
-    { id: "notif5", type: "contact", message: "Nuevo mensaje de contacto de Pedro Suárez", read: false, createdAt: "2024-04-03" }
-  ]
+  notifications: []
 };
 
 function initializeData() {
