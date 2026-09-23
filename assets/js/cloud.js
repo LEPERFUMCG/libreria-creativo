@@ -121,20 +121,38 @@ const Cloud = {
 
   startPoll() {
     const self = this;
-    const tick = function () {
-      setTimeout(async function () {
-        if (!self._polling) {
-          self._polling = true;
-          try {
-            const rows = await self.loadAll();
-            if (rows) rows.forEach(r => self.applyRemote(r.key, r.value));
-          } catch (e) { /* silent */ }
-          self._polling = false;
-        }
-        tick();
-      }, 6000);
+    let timer = null;
+
+    const syncOnce = async function () {
+      if (self._polling) return;
+      if (document.visibilityState !== 'visible') return;
+      self._polling = true;
+      try {
+        const rows = await self.loadAll();
+        if (rows) rows.forEach(r => self.applyRemote(r.key, r.value));
+      } catch (e) { /* silent */ }
+      self._polling = false;
     };
-    tick();
+
+    const schedule = function (ms) {
+      timer = setTimeout(function () {
+        syncOnce().then(function () { schedule(60000); });
+      }, ms);
+    };
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        clearTimeout(timer);
+        syncOnce().then(function () { schedule(60000); });
+      }
+    });
+
+    if (document.visibilityState === 'visible') {
+      clearTimeout(timer);
+      syncOnce().then(function () { schedule(60000); });
+    } else {
+      schedule(60000);
+    }
   },
 
   emit(key) {
