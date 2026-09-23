@@ -529,12 +529,17 @@
                 e.target.value = '';
                 return;
             }
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                pendingCover = ev.target.result;
-                document.getElementById('book-cover-preview').innerHTML = '<img src="' + pendingCover + '" alt="Portada">';
-            };
-            reader.readAsDataURL(file);
+            Toast.show('Subiendo imagen a Storage...', 'info');
+            window.StorageUpload.uploadFile(file, 'books', function (err, url) {
+                if (err) {
+                    e.target.value = '';
+                    Toast.show('No se pudo subir la imagen (' + err + '). Configura Supabase Storage (bucket "media").', 'error');
+                    return;
+                }
+                pendingCover = url;
+                document.getElementById('book-cover-preview').innerHTML = '<img src="' + url + '" alt="Portada">';
+                Toast.show('Imagen subida', 'success');
+            });
         }
 
         function saveBook(e) {

@@ -544,12 +544,17 @@
                 e.target.value = '';
                 return;
             }
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                pendingAuthorPhoto = ev.target.result;
-                document.getElementById('author-photo-preview').innerHTML = '<img src="' + pendingAuthorPhoto + '" alt="Foto">';
-            };
-            reader.readAsDataURL(file);
+            Toast.show('Subiendo imagen a Storage...', 'info');
+            window.StorageUpload.uploadFile(file, 'authors', function (err, url) {
+                if (err) {
+                    e.target.value = '';
+                    Toast.show('No se pudo subir la imagen (' + err + '). Configura Supabase Storage (bucket "media").', 'error');
+                    return;
+                }
+                pendingAuthorPhoto = url;
+                document.getElementById('author-photo-preview').innerHTML = '<img src="' + url + '" alt="Foto">';
+                Toast.show('Imagen subida', 'success');
+            });
         }
 
         function saveAuthor(e) {

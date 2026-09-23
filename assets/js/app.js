@@ -1253,3 +1253,37 @@ function renderBarChart(containerId, data, labels) {
 function getConfiguredCurrency() {
   return DB.getConfig().currency || 'L.';
 }
+
+// ============================================
+// UPLOAD FILES TO SUPABASE STORAGE (bucket "media")
+// Guarda el archivo y devuelve la URL publica.
+// Requiere cuota de Storage + bucket "media" publico con
+// politica de subida para anon. Si falla, llama done(err).
+// ============================================
+window.StorageUpload = {
+  BUCKET: 'media',
+  uploadFile: function (file, folder, done) {
+    const mimeExt = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/svg+xml': 'svg' };
+    const ext = mimeExt[file.type] || 'jpg';
+    const name = Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '.' + ext;
+    const path = folder + '/' + name;
+    const confUrl = (typeof CLOUD_CONFIG !== 'undefined' && CLOUD_CONFIG.url) ? CLOUD_CONFIG.url.replace(/\/$/, '') : '';
+    const anonKey = (typeof CLOUD_CONFIG !== 'undefined') ? CLOUD_CONFIG.anonKey : '';
+    if (!confUrl || !anonKey) { done('falta config de Supabase'); return; }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', confUrl + '/storage/v1/object/' + this.BUCKET + '/' + path, true);
+    xhr.setRequestHeader('apikey', anonKey);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + anonKey);
+    xhr.setRequestHeader('x-upsert', 'true');
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        done(null, confUrl + '/storage/v1/object/public/' + this.BUCKET + '/' + path);
+      } else {
+        done('Storage ' + xhr.status + (xhr.responseText ? ': ' + String(xhr.responseText).slice(0, 90) : ''));
+      }
+    }.bind(this);
+    xhr.onerror = function () { done('error de red al subir'); };
+    xhr.send(file);
+  }
+};
