@@ -261,13 +261,15 @@
                                         <div style="flex:1;">
                                             <input type="file" class="form-control" id="book-cover-file" accept="image/*">
                                             <div class="form-hint">Selecciona una imagen desde tu dispositivo (JPG o PNG).</div>
-                                            <input type="url" class="form-control" id="book-cover-url" style="margin-top:6px;" placeholder="https://... (enlace de portada)">
-                                            <div class="form-hint" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-                                                <button type="button" class="btn btn-sm btn-outline" onclick="searchCoverOnline()">🔍 Buscar portada en internet</button>
-                                                <span>Busca por título y elige; se guarda como enlace (no gasta espacio).</span>
-                                            </div>
                                         </div>
                                     </div>
+                                    <div class="form-hint" style="margin-top:8px;">O búscala en internet escribiendo el nombre del libro:</div>
+                                    <div style="display:flex;gap:6px;margin-top:4px;">
+                                        <input type="text" class="form-control" id="cover-search-name" placeholder="Nombre del libro" style="flex:1;">
+                                        <button type="button" class="btn btn-sm btn-outline" onclick="searchCoverOnline()">🔍 Buscar</button>
+                                    </div>
+                                    <div class="form-hint">La portada elegida se guarda como enlace y no gasta espacio.</div>
+                                    <input type="url" class="form-control" id="book-cover-url" style="margin-top:8px;" placeholder="https://... (opcional: pega una URL directa)">
                                     <div id="cover-search-results" style="display:none;margin-top:10px;"></div>
                                 </div>
                                 <div class="form-group">
@@ -513,11 +515,13 @@
             document.getElementById('book-cover-preview').innerHTML = '<span>📖</span>';
             document.getElementById('book-modal-title').textContent = 'Nuevo Libro';
             document.getElementById('book-save-btn').textContent = 'Guardar Libro';
+            var searchNameEl = document.getElementById('cover-search-name');
             if (id) {
                 var b = DB.getBook(id);
                 if (!b) return;
                 document.getElementById('book-modal-title').textContent = 'Editar Libro';
                 document.getElementById('book-save-btn').textContent = 'Actualizar Libro';
+                if (searchNameEl) searchNameEl.value = b.title || '';
                 setVal('book-title', b.title);
                 setVal('book-author', b.authorId);
                 setVal('book-publisher', b.publisherId);
@@ -540,6 +544,7 @@
                 }
                 document.getElementById('book-cover-url').value = b.cover || '';
             } else {
+                if (searchNameEl) searchNameEl.value = '';
                 document.getElementById('book-cover-url').value = '';
                 document.getElementById('book-active').checked = true;
                 setVal('book-language', 'Español');
@@ -577,7 +582,7 @@
         function searchCoverOnline() {
             var box = document.getElementById('cover-search-results');
             if (coverSearchBusy) return;
-            var title = getVal('book-title').trim();
+            var title = (document.getElementById('cover-search-name').value || getVal('book-title') || '').trim();
             var isbn = getVal('book-isbn').trim();
             var authorName = '';
             var authorId = getVal('book-author');
@@ -755,6 +760,9 @@
                 } else if (!pendingCover || pendingCover.indexOf('data:') === 0) {
                     document.getElementById('book-cover-preview').innerHTML = '<span>📖</span>';
                 }
+            });
+            document.getElementById('cover-search-name').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); searchCoverOnline(); }
             });
         }
     </script>
