@@ -147,6 +147,28 @@
                         flex-shrink: 0;
                     }
                     .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+                    #cover-search-results {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                        gap: 8px;
+                    }
+                    .cover-search-item {
+                        border: 1px solid var(--gray-200);
+                        border-radius: 8px;
+                        overflow: hidden;
+                        background: #fff;
+                        padding: 0;
+                        cursor: pointer;
+                        text-align: center;
+                        display: flex;
+                        flex-direction: column;
+                        transition: box-shadow .2s ease, transform .2s ease;
+                    }
+                    .cover-search-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); transform: translateY(-2px); }
+                    .cover-search-item img { width: 100%; height: 150px; object-fit: contain; background: #fff; }
+                    .cover-search-item span { font-size: .7rem; padding: 6px; color: var(--gray-700); line-height: 1.3; }
+                    .cover-search-item em { color: var(--gray-400); font-style: normal; font-size: .65rem; }
+                    .cover-search-loading, .cover-search-note { color: var(--gray-500); font-size: .85rem; }
                     .switch {
                         position: relative;
                         display: inline-block;
@@ -239,8 +261,14 @@
                                         <div style="flex:1;">
                                             <input type="file" class="form-control" id="book-cover-file" accept="image/*">
                                             <div class="form-hint">Selecciona una imagen desde tu dispositivo (JPG o PNG).</div>
+                                            <input type="url" class="form-control" id="book-cover-url" style="margin-top:6px;" placeholder="https://... (enlace de portada)">
+                                            <div class="form-hint" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                                                <button type="button" class="btn btn-sm btn-outline" onclick="searchCoverOnline()">🔍 Buscar portada en internet</button>
+                                                <span>Busca por título y elige; se guarda como enlace (no gasta espacio).</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div id="cover-search-results" style="display:none;margin-top:10px;"></div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="book-title">Título *</label>
@@ -510,7 +538,9 @@
                 if (b.cover) {
                     document.getElementById('book-cover-preview').innerHTML = '<img src="' + b.cover + '" alt="Portada">';
                 }
+                document.getElementById('book-cover-url').value = b.cover || '';
             } else {
+                document.getElementById('book-cover-url').value = '';
                 document.getElementById('book-active').checked = true;
                 setVal('book-language', 'Español');
                 setVal('book-price', '');
@@ -535,6 +565,66 @@
                 document.getElementById('book-cover-preview').innerHTML = '<img src="' + pendingCover + '" alt="Portada">';
             };
             reader.readAsDataURL(file);
+        }
+
+        function sxText(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        var coverResults = [];
+        var coverSearchBusy = false;
+
+        function searchCoverOnline() {
+            var box = document.getElementById('cover-search-results');
+            if (coverSearchBusy) return;
+            var title = getVal('book-title').trim();
+            var isbn = getVal('book-isbn').trim();
+            if (!title && !isbn) {
+                Toast.show('Escribe al menos el título (o ISBN) para buscar', 'error');
+                return;
+            }
+            var q = (isbn.length >= 10 && /^[0-9Xx\-]+$/.test(isbn)) ? 'isbn:' + isbn : 'intitle:"' + title + '"';
+            coverSearchBusy = true;
+            box.style.display = 'grid';
+            box.innerHTML = '<div class="cover-search-loading">Buscando portadas…</div>';
+            fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=9&langRestrict=es')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    coverSearchBusy = false;
+                    var items = (data.items || []).filter(function(it) {
+                        return it.volumeInfo && it.volumeInfo.imageLinks && it.volumeInfo.imageLinks.thumbnail;
+                    });
+                    if (!items.length) {
+                        box.innerHTML = '<div class="cover-search-note">No se encontraron portadas para esa búsqueda. Prueba con otro título o escribe el ISBN.</div>';
+                        return;
+                    }
+                    coverResults = items.map(function(it) {
+                        return (it.volumeInfo.imageLinks.extraLarge || it.volumeInfo.imageLinks.large || it.volumeInfo.imageLinks.thumbnail || '').replace('http://', 'https://');
+                    });
+                    box.innerHTML = items.map(function(it, i) {
+                        var thumb = (it.volumeInfo.imageLinks.thumbnail || '').replace('http://', 'https://');
+                        var t = it.volumeInfo.title || '';
+                        var a = (it.volumeInfo.authors || []).join(', ');
+                        return '<button type="button" class="cover-search-item" title="' + sxText(t) + '" onclick="selectSearchedCover(' + i + ')">' +
+                            '<img src="' + sxText(thumb) + '" alt="" loading="lazy">' +
+                            '<span>' + sxText(t) + (a ? '<br><em>' + sxText(a) + '</em>' : '') + '</span>' +
+                        '</button>';
+                    }).join('');
+                })
+                .catch(function(e) {
+                    coverSearchBusy = false;
+                    box.innerHTML = '<div class="cover-search-note">Error al buscar: ' + sxText(e.message) + '</div>';
+                });
+        }
+
+        function selectSearchedCover(i) {
+            var url = coverResults[i] || '';
+            if (!url) return;
+            pendingCover = url;
+            document.getElementById('book-cover-url').value = url;
+            document.getElementById('book-cover-preview').innerHTML = '<img src="' + sxText(url) + '" alt="Portada">';
+            document.getElementById('cover-search-results').style.display = 'none';
+            Toast.show('Portada seleccionada ✓', 'success');
         }
 
         function saveBook(e) {
@@ -631,6 +721,15 @@
             document.getElementById('book-status-filter').addEventListener('change', renderBooks);
             document.getElementById('book-form').addEventListener('submit', saveBook);
             document.getElementById('book-cover-file').addEventListener('change', handleCoverUpload);
+            document.getElementById('book-cover-url').addEventListener('input', function() {
+                var v = this.value.trim();
+                if (v) {
+                    pendingCover = v;
+                    document.getElementById('book-cover-preview').innerHTML = '<img src="' + sxText(v) + '" alt="Portada">';
+                } else if (!pendingCover || pendingCover.indexOf('data:') === 0) {
+                    document.getElementById('book-cover-preview').innerHTML = '<span>📖</span>';
+                }
+            });
         }
     </script>
 </body>
