@@ -71,6 +71,27 @@ window.addEventListener('bookstore-updated', function (e) {
 });
 
 // ============================================
+// VISOR DE ERRORES EN PANTALLA (solo admin)
+// Muestra en rojo cualquier error JS para diagnosticar sin devtools
+// ============================================
+window.addEventListener('error', function (ev) {
+  if (!ev || !ev.message) return;
+  if (ev.target && ev.target.tagName) return;
+  if (!window.location.pathname.match(/\/admin\//)) return;
+  try {
+    var bar = document.getElementById('js-error-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'js-error-bar';
+      bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;font:600 12px/1.5 Arial,sans-serif;padding:8px 12px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+      bar.onclick = function () { this.remove(); };
+      document.body.appendChild(bar);
+    }
+    bar.textContent = 'ERROR en la consola: ' + ev.message;
+  } catch (err) { /* silencioso */ }
+});
+
+// ============================================
 // DATA MANAGER
 // ============================================
 const DB = {
@@ -839,7 +860,7 @@ function processCheckout(formData) {
 
   const order = {
     id: DB.generateId('ord'),
-    customerId: Auth.getCustomer()?.id || null,
+    customerId: (Auth.getCustomer() ? Auth.getCustomer().id : null) || null,
     items: items.map(i => ({ bookId: i.bookId, quantity: i.quantity, price: i.price })),
     subtotal,
     shipping,
@@ -1090,7 +1111,7 @@ function submitSwitchUser(e) {
     if (err) { err.textContent = result.message || 'Credenciales incorrectas'; err.style.display = 'block'; }
     return;
   }
-  Toast.show('Sesión iniciada como ' + (result.user?.name || email), 'success');
+  Toast.show('Sesión iniciada como ' + ((result.user && result.user.name) || email), 'success');
   setTimeout(function () { window.location.reload(); }, 500);
 }
 

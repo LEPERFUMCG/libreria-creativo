@@ -178,7 +178,7 @@
     var config = DB.getConfig();
     var editingIdx = -1;
 
-    document.getElementById('free-shipping-input').value = config.freeShippingMin ?? 50;
+    document.getElementById('free-shipping-input').value = config.freeShippingMin != null ? config.freeShippingMin : 50;
 
     document.getElementById('save-free-shipping').addEventListener('click', function () {
       config.freeShippingMin = parseFloat(document.getElementById('free-shipping-input').value) || 0;
@@ -186,7 +186,7 @@
       showToast('Monto de envío gratis actualizado');
     });
 
-    document.getElementById('base-shipping-input').value = config.shippingCost ?? 50;
+    document.getElementById('base-shipping-input').value = config.shippingCost != null ? config.shippingCost : 50;
 
     document.getElementById('save-base-shipping').addEventListener('click', function () {
       config.shippingCost = parseFloat(document.getElementById('base-shipping-input').value) || 0;
