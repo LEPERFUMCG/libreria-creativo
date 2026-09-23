@@ -335,35 +335,41 @@ const SEED_DATA = {
 };
 
 function initializeData() {
-  if (!localStorage.getItem('bookstore_initialized')) {
-    localStorage.setItem('bookstore_config', JSON.stringify(SEED_DATA.config));
-    localStorage.setItem('bookstore_categories', JSON.stringify(SEED_DATA.categories));
-    localStorage.setItem('bookstore_genres', JSON.stringify(SEED_DATA.genres));
-    localStorage.setItem('bookstore_authors', JSON.stringify(SEED_DATA.authors));
-    localStorage.setItem('bookstore_publishers', JSON.stringify(SEED_DATA.publishers));
-    localStorage.setItem('bookstore_books', JSON.stringify(SEED_DATA.books));
-    localStorage.setItem('bookstore_pages', JSON.stringify(SEED_DATA.pages));
-    localStorage.setItem('bookstore_shippingZones', JSON.stringify(SEED_DATA.shippingZones));
-    localStorage.setItem('bookstore_paymentMethods', JSON.stringify(SEED_DATA.paymentMethods));
-    localStorage.setItem('bookstore_deliveryMethods', JSON.stringify(SEED_DATA.deliveryMethods));
-    localStorage.setItem('bookstore_promotions', JSON.stringify(SEED_DATA.promotions));
-    localStorage.setItem('bookstore_adminUsers', JSON.stringify(SEED_DATA.adminUsers));
-    localStorage.setItem('bookstore_customers', JSON.stringify(SEED_DATA.customers));
-    localStorage.setItem('bookstore_orders', JSON.stringify(SEED_DATA.orders));
-    localStorage.setItem('bookstore_contactMessages', JSON.stringify(SEED_DATA.contactMessages));
-    localStorage.setItem('bookstore_inventory', JSON.stringify(SEED_DATA.inventory));
-    localStorage.setItem('bookstore_notifications', JSON.stringify(SEED_DATA.notifications));
-    localStorage.setItem('bookstore_initialized', 'true');
+  if (!safeGetItem('bookstore_initialized')) {
+    try {
+      localStorage.setItem('bookstore_config', JSON.stringify(SEED_DATA.config));
+      localStorage.setItem('bookstore_categories', JSON.stringify(SEED_DATA.categories));
+      localStorage.setItem('bookstore_genres', JSON.stringify(SEED_DATA.genres));
+      localStorage.setItem('bookstore_authors', JSON.stringify(SEED_DATA.authors));
+      localStorage.setItem('bookstore_publishers', JSON.stringify(SEED_DATA.publishers));
+      localStorage.setItem('bookstore_books', JSON.stringify(SEED_DATA.books));
+      localStorage.setItem('bookstore_pages', JSON.stringify(SEED_DATA.pages));
+      localStorage.setItem('bookstore_shippingZones', JSON.stringify(SEED_DATA.shippingZones));
+      localStorage.setItem('bookstore_paymentMethods', JSON.stringify(SEED_DATA.paymentMethods));
+      localStorage.setItem('bookstore_deliveryMethods', JSON.stringify(SEED_DATA.deliveryMethods));
+      localStorage.setItem('bookstore_promotions', JSON.stringify(SEED_DATA.promotions));
+      localStorage.setItem('bookstore_adminUsers', JSON.stringify(SEED_DATA.adminUsers));
+      localStorage.setItem('bookstore_customers', JSON.stringify(SEED_DATA.customers));
+      localStorage.setItem('bookstore_orders', JSON.stringify(SEED_DATA.orders));
+      localStorage.setItem('bookstore_contactMessages', JSON.stringify(SEED_DATA.contactMessages));
+      localStorage.setItem('bookstore_inventory', JSON.stringify(SEED_DATA.inventory));
+      localStorage.setItem('bookstore_notifications', JSON.stringify(SEED_DATA.notifications));
+      localStorage.setItem('bookstore_initialized', 'true');
+    } catch (e) { /* almacenamiento bloqueado */ }
   }
 }
 
+function safeGetItem(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+
 function getData(key) {
-  const data = localStorage.getItem('bookstore_' + key);
+  const data = safeGetItem('bookstore_' + key);
   return data ? JSON.parse(data) : null;
 }
 
 function setData(key, value) {
-  localStorage.setItem('bookstore_' + key, JSON.stringify(value));
+  try { localStorage.setItem('bookstore_' + key, JSON.stringify(value)); } catch (e) { /* almacenamiento bloqueado */ }
   if (typeof Cloud !== 'undefined' && Cloud.enabled()) Cloud.onLocalWrite(key);
 }
 

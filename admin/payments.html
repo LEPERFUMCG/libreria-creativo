@@ -77,6 +77,22 @@
   </style>
 </head>
 <body>
+  <script>
+    window.onerror = function (msg, src, line) {
+      try {
+        var bar = document.getElementById('js-error-bar');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'js-error-bar';
+          bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;font:600 12px/1.5 Arial,sans-serif;padding:8px 12px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+          bar.onclick = function () { bar.remove(); };
+          document.body.appendChild(bar);
+        }
+        bar.textContent = 'ERROR: ' + msg + ' | ' + src + ' | linea ' + line;
+      } catch (e) {}
+      return false;
+    };
+  </script>
   <div class="admin-layout">
     <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="toggleAdminSidebar()"></div>
     <aside class="admin-sidebar" id="admin-sidebar"></aside>
