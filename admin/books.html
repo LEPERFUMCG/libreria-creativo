@@ -597,32 +597,37 @@
             }
             coverSearchBusy = true;
             box.style.display = 'grid';
-            box.innerHTML = '<div class="cover-search-loading">Buscando en 5 sitios…</div>';
+            box.innerHTML = '<div class="cover-search-loading">Buscando en Google Books, Open Library, Wikimedia, Wikipedia y Archive.org…</div>';
             var tasks = [
                 fetchGoogle(title, isbn).catch(function() { return []; }),
                 fetchOpenLibrary(title, authorName, isbn).catch(function() { return []; }),
                 fetchWikimedia(title).catch(function() { return []; }),
-                fetchOpenverse(title, authorName).catch(function() { return []; }),
+                fetchWikipedia(title, authorName).catch(function() { return []; }),
                 fetchInternetArchive(title).catch(function() { return []; })
             ];
             Promise.all(tasks).then(function(lists) {
                 coverSearchBusy = false;
                 var seen = {};
                 var merged = [];
+                var foundSources = 0;
                 lists.forEach(function(list) {
+                    var n = 0;
                     (list || []).forEach(function(r) {
                         if (!r || !r.url || seen[r.url]) return;
                         seen[r.url] = 1;
                         merged.push(r);
+                        n++;
                     });
+                    if (n > 0) foundSources++;
                 });
                 if (!merged.length) {
-                    box.innerHTML = '<div class="cover-search-note">No se encontraron portadas en ninguno de los buscadores. Prueba con otro título o escribe el ISBN.</div>';
+                    box.innerHTML = '<div class="cover-search-note">No se encontró portada para ese nombre. Revisa la ortografía o escribe el ISBN (número de 13 dígitos / 978…).</div>';
                     return;
                 }
                 merged = merged.slice(0, 24);
                 coverResults = merged.map(function(r) { return r.url; });
-                box.innerHTML = merged.map(function(r, i) {
+                box.innerHTML = '<div class="cover-search-note" style="margin-bottom:8px;">' + merged.length + ' portadas de ' + foundSources + ' sitios:</div>' +
+                    merged.map(function(r, i) {
                     return '<button type="button" class="cover-search-item" title="' + sxText(r.title) + '" onclick="selectSearchedCover(' + i + ')">' +
                         '<img src="' + sxText(r.thumb) + '" alt="" loading="lazy">' +
                         '<span>' + sxText(r.title) + (r.author ? '<br><em>' + sxText(r.author) + '</em>' : '') +
@@ -691,20 +696,41 @@
                 });
         }
 
-        function fetchOpenverse(title, author) {
+        function fetchWikipedia(title, author) {
             var q = title + (author ? ' ' + author : '');
-            return fetch('https://api.openverse.org/v1/images/?q=' + encodeURIComponent(q) + '&page_size=20&aspect_ratio=tall')
+            return fetch('https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(q) + '&srlimit=5&format=json&origin=*')
                 .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
                 .then(function(data) {
-                    return (data.results || []).filter(function(x) { return x.url; }).map(function(x) {
-                        return {
-                            url: x.url,
-                            thumb: x.thumbnail || x.url,
-                            title: x.title || '',
-                            author: x.creator || '',
-                            source: 'Openverse'
-                        };
+                    var h = ((data.query || {}).search) || [];
+                    var best = null;
+                    var words = title.toLowerCase().split(/\s+/).filter(Boolean);
+                    h.forEach(function(x) {
+                        if (best) return;
+                        var lower = x.title.toLowerCase();
+                        if (words.length >= 3 && lower.indexOf(words.join(' ')) !== -1) best = x;
+                        else if (words.length === 2 && lower.indexOf(words[0]) !== -1 && lower.indexOf(words[1]) !== -1) best = x;
                     });
+                    if (!best) best = h.find(function(x) { return x.title.length <= 70; }) || h[0];
+                    if (!best) return [];
+                    return fetch('https://es.wikipedia.org/w/api.php?action=query&prop=pageimages&piprop=original|thumbnail&titles=' + encodeURIComponent(best.title) + '&format=json&origin=*')
+                        .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+                        .then(function(pg) {
+                            var pages = ((pg.query || {}).pages) || {};
+                            var out = [];
+                            Object.keys(pages).forEach(function(k) {
+                                var x = pages[k];
+                                if (x.original && x.original.source) {
+                                    out.push({
+                                        url: x.original.source,
+                                        thumb: (x.thumbnail && x.thumbnail.source) || x.original.source,
+                                        title: x.title || '',
+                                        author: '',
+                                        source: 'Wikipedia'
+                                    });
+                                }
+                            });
+                            return out;
+                        });
                 });
         }
 
