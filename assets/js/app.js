@@ -94,41 +94,48 @@ window.addEventListener('error', function (ev) {
 // ============================================
 // DATA MANAGER
 // ============================================
+function asList(value) {
+  return Array.isArray(value) ? value : [];
+}
+function asObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
 const DB = {
   getConfig() { return getData('config') || (window.SEED_DATA && SEED_DATA.config) || {}; },
   setConfig(cfg) { setData('config', cfg); },
-  getCategories() { return getData('categories') || []; },
+  getCategories() { return asList(getData('categories')); },
   setCategories(c) { setData('categories', c); },
-  getGenres() { return getData('genres') || []; },
+  getGenres() { return asList(getData('genres')); },
   setGenres(g) { setData('genres', g); },
-  getAuthors() { return getData('authors') || []; },
+  getAuthors() { return asList(getData('authors')); },
   setAuthors(a) { setData('authors', a); },
-  getPublishers() { return getData('publishers') || []; },
+  getPublishers() { return asList(getData('publishers')); },
   setPublishers(p) { setData('publishers', p); },
-  getBooks() { return getData('books') || []; },
+  getBooks() { return asList(getData('books')); },
   setBooks(b) { setData('books', b); },
   getBook(id) { return this.getBooks().find(b => b.id === id); },
-  getPages() { return getData('pages') || {}; },
+  getPages() { return asObject(getData('pages')); },
   setPages(p) { setData('pages', p); },
-  getShippingZones() { return getData('shippingZones') || []; },
+  getShippingZones() { return asList(getData('shippingZones')); },
   setShippingZones(z) { setData('shippingZones', z); },
-  getPaymentMethods() { return getData('paymentMethods') || []; },
+  getPaymentMethods() { return asList(getData('paymentMethods')); },
   setPaymentMethods(m) { setData('paymentMethods', m); },
-  getDeliveryMethods() { return getData('deliveryMethods') || []; },
+  getDeliveryMethods() { return asList(getData('deliveryMethods')); },
   setDeliveryMethods(m) { setData('deliveryMethods', m); },
-  getPromotions() { return getData('promotions') || []; },
+  getPromotions() { return asList(getData('promotions')); },
   setPromotions(p) { setData('promotions', p); },
-  getAdminUsers() { return getData('adminUsers') || []; },
+  getAdminUsers() { return asList(getData('adminUsers')); },
   setAdminUsers(u) { setData('adminUsers', u); },
-  getCustomers() { return getData('customers') || []; },
+  getCustomers() { return asList(getData('customers')); },
   setCustomers(c) { setData('customers', c); },
-  getOrders() { return getData('orders') || []; },
+  getOrders() { return asList(getData('orders')); },
   setOrders(o) { setData('orders', o); },
-  getContactMessages() { return getData('contactMessages') || []; },
+  getContactMessages() { return asList(getData('contactMessages')); },
   setContactMessages(m) { setData('contactMessages', m); },
-  getInventory() { return getData('inventory') || []; },
+  getInventory() { return asList(getData('inventory')); },
   setInventory(i) { setData('inventory', i); },
-  getNotifications() { return getData('notifications') || []; },
+  getNotifications() { return asList(getData('notifications')); },
   setNotifications(n) { setData('notifications', n); },
 
   getCategory(id) { return this.getCategories().find(c => c.id === id); },

@@ -354,6 +354,17 @@
 
     renderTable('payment');
     renderTable('delivery');
+
+    window.addEventListener('bookstore-updated', function (e) {
+      if (e.detail === 'paymentMethods' && (!window.Cloud || !Cloud.isDirty('paymentMethods'))) {
+        paymentMethods = DB.getPaymentMethods();
+        renderTable('payment');
+      }
+      if (e.detail === 'deliveryMethods' && (!window.Cloud || !Cloud.isDirty('deliveryMethods'))) {
+        deliveryMethods = DB.getDeliveryMethods();
+        renderTable('delivery');
+      }
+    });
   </script>
 </body>
 </html>

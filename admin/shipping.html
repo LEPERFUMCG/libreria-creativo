@@ -333,6 +333,18 @@
     });
 
     renderZones();
+
+    window.addEventListener('bookstore-updated', function (e) {
+      if (e.detail === 'shippingZones' && (!window.Cloud || !Cloud.isDirty('shippingZones'))) {
+        zones = DB.getShippingZones();
+        renderZones();
+      }
+      if (e.detail === 'config' && (!window.Cloud || !Cloud.isDirty('config'))) {
+        config = DB.getConfig();
+        document.getElementById('free-shipping-input').value = config.freeShippingMin != null ? config.freeShippingMin : 50;
+        document.getElementById('base-shipping-input').value = config.shippingCost != null ? config.shippingCost : 50;
+      }
+    });
   </script>
 </body>
 </html>

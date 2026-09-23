@@ -70,6 +70,9 @@ const Cloud = {
   applyRemote(key, value) {
     if (!key || value === null || value === undefined) return;
     if (this.dirty[key]) return;
+    if (typeof value === 'string') {
+      try { value = JSON.parse(value); } catch (e) { /* conservar texto plano */ }
+    }
     const cur = localStorage.getItem('bookstore_' + key);
     try {
       const np = JSON.stringify(value);
@@ -96,8 +99,11 @@ const Cloud = {
     keys.forEach(k => {
       const raw = localStorage.getItem('bookstore_' + k);
       if (raw !== null) {
-        try { payload.push({ key: k, value: JSON.parse(raw) }); }
-        catch (e) { /* silent */ }
+        try {
+          let v = JSON.parse(raw);
+          if (typeof v === 'string') { try { v = JSON.parse(v); } catch (e) {} }
+          payload.push({ key: k, value: v });
+        } catch (e) { /* silent */ }
       }
     });
     if (!payload.length) return;

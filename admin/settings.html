@@ -287,6 +287,12 @@
       DB.setConfig(updated);
       showToast('Configuración guardada correctamente');
     });
+
+    window.addEventListener('bookstore-updated', function (e) {
+      if (e.detail === 'config' && (!window.Cloud || !Cloud.isDirty('config'))) {
+        fillForm(DB.getConfig());
+      }
+    });
   </script>
 </body>
 </html>
