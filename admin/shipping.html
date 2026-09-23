@@ -95,6 +95,19 @@
           </div>
         </div>
 
+        <div class="info-card">
+          <span class="info-icon">&#128762;</span>
+          <div class="info-text">
+            <strong>Costo de Envío Estándar</strong>
+            <p>Este es el costo que se cobra al cliente en el checkout cuando su compra no alcanza el envío gratis.</p>
+          </div>
+          <div class="info-input">
+            <span style="font-size:.9rem;color:#374151">L</span>
+            <input type="number" id="base-shipping-input" min="0" step="0.01" placeholder="50">
+            <button id="save-base-shipping">Guardar</button>
+          </div>
+        </div>
+
         <div class="page-header">
           <h2>Zonas de Envío</h2>
           <button class="add-btn" id="add-zone-btn">+ Nueva Zona</button>
@@ -166,6 +179,14 @@
       config.freeShippingMin = parseFloat(document.getElementById('free-shipping-input').value) || 0;
       DB.setConfig(config);
       showToast('Monto de envío gratis actualizado');
+    });
+
+    document.getElementById('base-shipping-input').value = config.shippingCost ?? 50;
+
+    document.getElementById('save-base-shipping').addEventListener('click', function () {
+      config.shippingCost = parseFloat(document.getElementById('base-shipping-input').value) || 0;
+      DB.setConfig(config);
+      showToast('Costo de envío estándar actualizado');
     });
 
     function generateId() {
