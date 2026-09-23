@@ -363,6 +363,10 @@ const Toast = {
   }
 };
 
+window.showToast = function (message, type, duration) {
+  Toast.show(message, type, duration);
+};
+
 // ============================================
 // MODAL MANAGER
 // ============================================
