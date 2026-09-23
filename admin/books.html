@@ -579,25 +579,27 @@
             if (coverSearchBusy) return;
             var title = getVal('book-title').trim();
             var isbn = getVal('book-isbn').trim();
+            var authorName = '';
+            var authorId = getVal('book-author');
+            if (authorId) {
+                var auth = (DB.getAuthors() || []).find(function(a) { return a.id === authorId; });
+                if (auth) authorName = auth.name || '';
+            }
             if (!title && !isbn) {
                 Toast.show('Escribe al menos el título (o ISBN) para buscar', 'error');
                 return;
             }
-            var q = (isbn.length >= 10 && /^[0-9Xx\-]+$/.test(isbn)) ? 'isbn:' + isbn : 'intitle:"' + title + '"';
             coverSearchBusy = true;
             box.style.display = 'grid';
             box.innerHTML = '<div class="cover-search-loading">Buscando portadas…</div>';
-            fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=9&langRestrict=es')
-                .then(function(r) { return r.json(); })
+            var gq = (isbn.length >= 10 && /^[0-9Xx\-]+$/.test(isbn)) ? 'isbn:' + isbn : 'intitle:"' + title + '"';
+            fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(gq) + '&maxResults=9&langRestrict=es')
+                .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
                 .then(function(data) {
-                    coverSearchBusy = false;
                     var items = (data.items || []).filter(function(it) {
                         return it.volumeInfo && it.volumeInfo.imageLinks && it.volumeInfo.imageLinks.thumbnail;
                     });
-                    if (!items.length) {
-                        box.innerHTML = '<div class="cover-search-note">No se encontraron portadas para esa búsqueda. Prueba con otro título o escribe el ISBN.</div>';
-                        return;
-                    }
+                    if (!items.length) throw new Error('Sin resultados');
                     coverResults = items.map(function(it) {
                         return (it.volumeInfo.imageLinks.extraLarge || it.volumeInfo.imageLinks.large || it.volumeInfo.imageLinks.thumbnail || '').replace('http://', 'https://');
                     });
@@ -611,9 +613,33 @@
                         '</button>';
                     }).join('');
                 })
+                .catch(function() { return searchOpenLibrary(title, authorName, isbn); });
+        }
+
+        function searchOpenLibrary(title, author, isbn) {
+            var box = document.getElementById('cover-search-results');
+            var q = (isbn.length >= 10 && /^[0-9Xx\-]+$/.test(isbn)) ? 'isbn:' + isbn : title + (author ? ' author:' + author : '');
+            box.innerHTML = '<div class="cover-search-loading">Buscando en Open Library…</div>';
+            return fetch('https://openlibrary.org/search.json?q=' + encodeURIComponent(q) + '&limit=12&fields=title,author_name,cover_i')
+                .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+                .then(function(data) {
+                    var docs = (data.docs || []).filter(function(d) { return d.cover_i && d.cover_i > 0; });
+                    if (!docs.length) {
+                        box.innerHTML = '<div class="cover-search-note">No se encontraron portadas con ninguno de los buscadores. Prueba con otro título o escribe el ISBN.</div>';
+                        return;
+                    }
+                    coverResults = docs.map(function(d) { return 'https://covers.openlibrary.org/b/id/' + d.cover_i + '-L.jpg'; });
+                    box.innerHTML = docs.map(function(d, i) {
+                        var t = d.title || '';
+                        var a = (d.author_name || []).join(', ');
+                        return '<button type="button" class="cover-search-item" title="' + sxText(t) + '" onclick="selectSearchedCover(' + i + ')">' +
+                            '<img src="https://covers.openlibrary.org/b/id/' + d.cover_i + '-M.jpg" alt="" loading="lazy">' +
+                            '<span>' + sxText(t) + (a ? '<br><em>' + sxText(a) + '</em>' : '') + '</span>' +
+                        '</button>';
+                    }).join('');
+                })
                 .catch(function(e) {
-                    coverSearchBusy = false;
-                    box.innerHTML = '<div class="cover-search-note">Error al buscar: ' + sxText(e.message) + '</div>';
+                    box.innerHTML = '<div class="cover-search-note">No se pudo buscar: ' + sxText(e.message) + '</div>';
                 });
         }
 
