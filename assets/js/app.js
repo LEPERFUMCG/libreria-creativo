@@ -74,7 +74,7 @@ window.addEventListener('bookstore-updated', function (e) {
 // DATA MANAGER
 // ============================================
 const DB = {
-  getConfig() { return getData('config'); },
+  getConfig() { return getData('config') || (window.SEED_DATA && SEED_DATA.config) || {}; },
   setConfig(cfg) { setData('config', cfg); },
   getCategories() { return getData('categories') || []; },
   setCategories(c) { setData('categories', c); },

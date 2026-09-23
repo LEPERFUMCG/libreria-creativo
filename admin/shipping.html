@@ -167,6 +167,11 @@
   </div>
 
   <script>
+    window.showToast = window.showToast || function (msg, type) {
+      try { if (window.Toast && Toast.show) Toast.show(msg, type || 'success'); else alert(msg); }
+      catch (e) { alert(msg); }
+    };
+
     initAdminPage('Envíos');
 
     var zones = DB.getShippingZones() || [];
